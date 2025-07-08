@@ -1,9 +1,10 @@
 {
+  "name": "ragflow-web",
   "private": true,
   "author": "bill",
   "scripts": {
     "build": "umi build",
-    "dev": "cross-env UMI_DEV_SERVER_COMPRESS=none umi dev",
+    "dev": "cross-env HMR=none UMI_DEV_SERVER_COMPRESS=none umi dev",
     "postinstall": "umi setup",
     "lint": "umi lint --eslint-only",
     "prepare": "cd .. && husky web/.husky",
@@ -125,7 +126,7 @@
     "@types/uuid": "^9.0.8",
     "@types/webpack-env": "^1.18.4",
     "@umijs/lint": "^4.1.1",
-    "@umijs/plugins": "^4.1.0",
+    "@umijs/plugins": "^4.4.11",
     "@welldone-software/why-did-you-render": "^8.0.3",
     "cross-env": "^7.0.3",
     "html-loader": "^5.1.0",

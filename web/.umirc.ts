@@ -9,21 +9,52 @@ export default defineConfig({
   outputPath: 'dist',
   alias: { '@parent': path.resolve(__dirname, '../') },
   npmClient: 'npm',
-  base: '/',
+  // 设置base路径以区分不同资源代理
+  base: process.env.NODE_ENV === 'production' ? '/ragflow/' : '/',
   routes,
-  publicPath: '/',
+  // 设置publicPath以支持微应用
+  publicPath:
+    process.env.NODE_ENV === 'production'
+      ? '/ragflow/'
+      : 'http://localhost:2080/',
   esbuildMinifyIIFE: true,
   icons: {},
   hash: true,
-  favicons: ['/logo.svg'],
-  headScripts: [{ src: '/iconfont.js', defer: true }],
+  favicons: [
+    process.env.NODE_ENV === 'production' ? '/ragflow/logo.svg' : '/logo.svg',
+  ],
+  headScripts: [
+    {
+      src:
+        process.env.NODE_ENV === 'production'
+          ? '/ragflow/iconfont.js'
+          : '/iconfont.js',
+      defer: true,
+    },
+  ],
   clickToComponent: {},
   history: {
-    type: 'browser',
+    type: 'hash',
   },
+  // 暂时禁用 MFSU 来避免模块联邦错误
+  mfsu: false,
+  // 添加qiankun微应用配置
+  qiankun: {
+    slave: {},
+  },
+
+  runtimePublicPath: {},
+
+  // 修复开发环境配置
+  ...(process.env.NODE_ENV === 'development' && {
+    // 开发环境特定配置
+    devtool: false,
+    fastRefresh: false,
+  }),
   plugins: [
     '@react-dev-inspector/umi4-plugin',
     '@umijs/plugins/dist/tailwindcss',
+    '@umijs/plugins/dist/qiankun',
   ],
   jsMinifier: 'none', // Fixed the issue that the page displayed an error after packaging lexical with terser
   lessLoader: {
@@ -31,26 +62,33 @@ export default defineConfig({
       hack: `true; @import "~@/less/index.less";`,
     },
   },
-  devtool: 'source-map',
+  // devtool 已移到上面的条件配置中
   copy: [
     { from: 'src/conf.json', to: 'dist/conf.json' },
     { from: 'node_modules/monaco-editor/min/vs/', to: 'dist/vs/' },
   ],
-  proxy: [
-    {
-      context: ['/api', '/v1'],
-      target: 'http://10.10.10.225:9380/',
+  proxy: {
+    '/v1': {
+      target: 'http://10.10.10.225:9380',
       changeOrigin: true,
-      ws: true,
-      logger: console,
-      // pathRewrite: { '^/v1': '/v1' },
+      onProxyRes: function (proxyRes, req, res) {
+        proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+      },
     },
-  ],
+  },
 
   chainWebpack(memo: any, args: any) {
     memo.module.rule('markdown').test(/\.md$/).type('asset/source');
 
     memo.optimization.minimizer('terser').use(TerserPlugin); // Fixed the issue that the page displayed an error after packaging lexical with terser
+
+    // Add CORS headers for dev server
+    memo.devServer.headers({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers':
+        'X-Requested-With, content-type, Authorization',
+    });
 
     return memo;
   },

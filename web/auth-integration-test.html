@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAGFlow 登录集成测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+        .auth-section {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .auth-section.success {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+        .auth-section.error {
+            border-color: #f56565;
+            background: #fff5f5;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-success { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .btn-danger { background: linear-gradient(135deg, #f56565, #e53e3e); }
+        .btn-warning { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        
+        .status-display {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .status-display.success { background: #c6f6d5; color: #22543d; }
+        .status-display.error { background: #fed7d7; color: #742a2a; }
+        .status-display.info { background: #bee3f8; color: #2a4365; }
+        
+        .micro-app-container {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            height: 600px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .logs {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 RAGFlow 登录集成测试</h1>
+            <p>测试主应用与RAGFlow微应用的登录信息传递</p>
+        </div>
+        
+        <div class="two-column">
+            <!-- 左侧：模拟主应用登录 -->
+            <div>
+                <div class="auth-section" id="mainAppSection">
+                    <h3>📱 模拟主应用登录</h3>
+                    <p>使用你提供的账号信息进行登录测试</p>
+                    
+                    <div class="form-group">
+                        <label>邮箱:</label>
+                        <input type="email" id="email" value="402087139@qq.com" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>密码:</label>
+                        <input type="password" id="password" value="12345678" readonly>
+                    </div>
+                    
+                    <button onclick="simulateMainAppLogin()" id="loginBtn">
+                        🚀 模拟主应用登录
+                    </button>
+                    
+                    <div id="mainAppStatus" class="status-display info">
+                        等待登录...
+                    </div>
+                </div>
+                
+                <div class="auth-section" id="authInfoSection" style="display: none;">
+                    <h3>🔑 认证信息</h3>
+                    <div class="form-group">
+                        <label>Authorization Header:</label>
+                        <textarea id="authHeader" rows="2" readonly></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Access Token:</label>
+                        <input type="text" id="accessToken" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>用户信息:</label>
+                        <textarea id="userInfoDisplay" rows="3" readonly></textarea>
+                    </div>
+                    
+                    <button onclick="loadMicroAppWithAuth()" class="btn-success">
+                        ✅ 传递认证信息并加载微应用
+                    </button>
+                    
+                    <button onclick="clearAuth()" class="btn-danger">
+                        🗑️ 清除认证信息
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 右侧：微应用控制 -->
+            <div>
+                <div class="auth-section">
+                    <h3>🎯 微应用控制</h3>
+                    
+                    <button onclick="loadMicroApp()" id="loadBtn">
+                        📦 加载微应用（无认证）
+                    </button>
+                    
+                    <button onclick="unloadMicroApp()" id="unloadBtn" disabled>
+                        ❌ 卸载微应用
+                    </button>
+                    
+                    <button onclick="testMicroAppAuth()" class="btn-warning">
+                        🔍 测试微应用登录状态
+                    </button>
+                    
+                    <div id="microAppStatus" class="status-display info">
+                        微应用未加载
+                    </div>
+                </div>
+                
+                <div class="auth-section">
+                    <h3>📊 测试结果</h3>
+                    <div id="testResults" class="status-display info">
+                        暂无测试结果
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 微应用容器 -->
+        <div class="container">
+            <h3>🖼️ RAGFlow 微应用</h3>
+            <div id="ragflow-container" class="micro-app-container">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #718096;">
+                    等待加载微应用...
+                </div>
+            </div>
+        </div>
+        
+        <!-- 日志区域 -->
+        <div class="container">
+            <h3>📝 操作日志</h3>
+            <div id="logs" class="logs"></div>
+            <button onclick="clearLogs()" class="btn-warning" style="margin-top: 10px;">
+                🧹 清空日志
+            </button>
+        </div>
+    </div>
+
+    <!-- Vue 3 和 qiankun -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/qiankun@2.10.16/dist/index.umd.min.js"></script>
+    
+    <script>
+        let microApp = null;
+        let authInfo = null;
+        
+        // 直接使用加密后的密码，不搞那些复杂的加密了
+        const ENCRYPTED_PASSWORD = 'HEVzBzMvx6womPS/gy8BPQf3FNEOq6eMOfr2CoiQ+zi1hoEzm0TlTrffSYX37tD9QmYCdB2F8pk6Hp5BF17D8W9n54AGL8gshA98cTWajNEko6jarB5KvJsHewgHokaH2nUJbbf55MpkIBTyASK7PFR2ZLHHPG+RzHzN9lEeJkpLE8PHJe5Q+9eTs9GIA/yYRycRb9CqR2M46e0f9/n6UdYQd8fln/IAhMVvenMGHBl9A0FazyNO3dwHNVT7WDg9zVWOqe48E01FxXAaGLeWu97b6umJdx99bZwkQcpohBcTVC+Pvk2lz/IOS3rkrGA3QcPFVrKJDRe18vFFep5UyA==';
+        
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `<span style="color: #90cdf4;">[${time}]</span> ${message}`;
+            logs.insertBefore(logEntry, logs.firstChild);
+            
+            // 限制日志数量
+            if (logs.children.length > 50) {
+                logs.removeChild(logs.lastChild);
+            }
+            
+            console.log(`[${time}] ${message}`);
+        }
+        
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status-display ${type}`;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        // 模拟主应用登录
+        async function simulateMainAppLogin() {
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = '🔄 登录中...';
+            
+            try {
+                log('🚀 开始模拟主应用登录...');
+                updateStatus('mainAppStatus', '正在登录...', 'info');
+                
+                // 直接使用加密后的密码
+                const response = await fetch('http://localhost:2080/v1/user/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: '402087139@qq.com',
+                        password: ENCRYPTED_PASSWORD
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 0) {
+                    // 提取认证信息
+                    const authHeader = response.headers.get('Authorization') || `Bearer ${result.data.access_token}`;
+                    
+                    authInfo = {
+                        authorization: authHeader,
+                        token: result.data.access_token,
+                        userInfo: {
+                            avatar: result.data.avatar,
+                            name: result.data.nickname,
+                            email: result.data.email,
+                        }
+                    };
+                    
+                    // 显示认证信息
+                    document.getElementById('authHeader').value = authInfo.authorization;
+                    document.getElementById('accessToken').value = authInfo.token;
+                    document.getElementById('userInfoDisplay').value = JSON.stringify(authInfo.userInfo, null, 2);
+                    
+                    document.getElementById('authInfoSection').style.display = 'block';
+                    document.getElementById('mainAppSection').className = 'auth-section success';
+                    
+                    updateStatus('mainAppStatus', `✅ 登录成功！用户: ${authInfo.userInfo.name}`, 'success');
+                    log(`✅ 主应用登录成功: ${authInfo.userInfo.email}`);
+                    
+                } else {
+                    throw new Error(result.message || '登录失败');
+                }
+                
+            } catch (error) {
+                log(`❌ 登录失败: ${error.message}`, 'error');
+                updateStatus('mainAppStatus', `❌ 登录失败: ${error.message}`, 'error');
+                document.getElementById('mainAppSection').className = 'auth-section error';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🚀 模拟主应用登录';
+            }
+        }
+        
+        // 加载微应用（无认证）
+        async function loadMicroApp() {
+            if (microApp) {
+                log('⚠️ 微应用已加载，请先卸载');
+                return;
+            }
+            
+            try {
+                log('📦 开始加载微应用（无认证信息）...');
+                updateStatus('microAppStatus', '正在加载微应用...', 'info');
+                
+                microApp = qiankun.loadMicroApp({
+                     name: 'ragflow-web',
+                     entry: 'http://localhost:2080',
+                     container: '#ragflow-container',
+                     props: {
+                         routerBase: '/ragflow',
+                         parentApp: 'auth-test'
+                     }
+                 });
+                
+                await microApp.mountPromise;
+                
+                document.getElementById('loadBtn').disabled = true;
+                document.getElementById('unloadBtn').disabled = false;
+                
+                updateStatus('microAppStatus', '✅ 微应用加载成功（未登录状态）', 'success');
+                log('✅ 微应用加载成功');
+                
+            } catch (error) {
+                log(`❌ 微应用加载失败: ${error.message}`, 'error');
+                updateStatus('microAppStatus', `❌ 加载失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 传递认证信息并加载微应用
+        async function loadMicroAppWithAuth() {
+            if (!authInfo) {
+                log('❌ 请先进行主应用登录', 'error');
+                return;
+            }
+            
+            if (microApp) {
+                log('🔄 微应用已加载，先卸载后重新加载...');
+                await unloadMicroApp();
+            }
+            
+            try {
+                log('🔐 开始加载微应用并传递认证信息...');
+                updateStatus('microAppStatus', '正在加载微应用（带认证）...', 'info');
+                
+                                 microApp = qiankun.loadMicroApp({
+                     name: 'ragflow-web',
+                     entry: 'http://localhost:2080',
+                     container: '#ragflow-container',
+                     props: {
+                         routerBase: '/ragflow',
+                         parentApp: 'auth-test',
+                         authInfo: authInfo  // 传递认证信息
+                     }
+                 });
+                
+                await microApp.mountPromise;
+                
+                document.getElementById('loadBtn').disabled = true;
+                document.getElementById('unloadBtn').disabled = false;
+                
+                updateStatus('microAppStatus', '✅ 微应用加载成功（已登录状态）', 'success');
+                log('✅ 微应用加载成功，认证信息已传递');
+                
+                // 延迟测试登录状态
+                setTimeout(() => {
+                    testMicroAppAuth();
+                }, 2000);
+                
+            } catch (error) {
+                log(`❌ 微应用加载失败: ${error.message}`, 'error');
+                updateStatus('microAppStatus', `❌ 加载失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 卸载微应用
+        async function unloadMicroApp() {
+            if (!microApp) {
+                log('⚠️ 微应用未加载');
+                return;
+            }
+            
+            try {
+                log('🗑️ 正在卸载微应用...');
+                updateStatus('microAppStatus', '正在卸载...', 'info');
+                
+                await microApp.unmount();
+                microApp = null;
+                
+                document.getElementById('ragflow-container').innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #718096;">
+                        微应用已卸载
+                    </div>
+                `;
+                
+                document.getElementById('loadBtn').disabled = false;
+                document.getElementById('unloadBtn').disabled = true;
+                
+                updateStatus('microAppStatus', '✅ 微应用已卸载', 'success');
+                log('✅ 微应用卸载成功');
+                
+            } catch (error) {
+                log(`❌ 卸载失败: ${error.message}`, 'error');
+                updateStatus('microAppStatus', `❌ 卸载失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试微应用登录状态
+        async function testMicroAppAuth() {
+            try {
+                log('🔍 测试微应用登录状态...');
+                
+                // 通过检查localStorage来验证登录状态
+                const iframe = document.querySelector('#ragflow-container iframe');
+                if (iframe && iframe.contentWindow) {
+                    const iframeStorage = iframe.contentWindow.localStorage;
+                    const authorization = iframeStorage.getItem('Authorization');
+                    const token = iframeStorage.getItem('token');
+                    const userInfo = iframeStorage.getItem('userInfo');
+                    
+                    if (authorization && token) {
+                        const user = JSON.parse(userInfo || '{}');
+                        updateStatus('testResults', `✅ 微应用已登录\n用户: ${user.name}\n邮箱: ${user.email}`, 'success');
+                        log(`✅ 微应用登录状态正常: ${user.email}`);
+                    } else {
+                        updateStatus('testResults', '❌ 微应用未登录', 'error');
+                        log('❌ 微应用未登录');
+                    }
+                } else {
+                    // 通过API测试
+                    const response = await fetch('http://localhost:2080/v1/user/info', {
+                        headers: {
+                            'Authorization': authInfo?.authorization || ''
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.code === 0) {
+                            updateStatus('testResults', `✅ API测试成功\n用户: ${result.data.nickname}`, 'success');
+                            log(`✅ API测试成功: ${result.data.email}`);
+                        } else {
+                            updateStatus('testResults', `❌ API测试失败: ${result.message}`, 'error');
+                            log(`❌ API测试失败: ${result.message}`);
+                        }
+                    } else {
+                        updateStatus('testResults', `❌ API请求失败: ${response.status}`, 'error');
+                        log(`❌ API请求失败: ${response.status}`);
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ 测试失败: ${error.message}`, 'error');
+                updateStatus('testResults', `❌ 测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清除认证信息
+        function clearAuth() {
+            authInfo = null;
+            document.getElementById('authInfoSection').style.display = 'none';
+            document.getElementById('mainAppSection').className = 'auth-section';
+            updateStatus('mainAppStatus', '认证信息已清除', 'info');
+            updateStatus('testResults', '暂无测试结果', 'info');
+            log('🗑️ 认证信息已清除');
+        }
+        
+        // 页面加载时的初始化
+        window.addEventListener('load', () => {
+            log('🎉 认证集成测试页面加载完成');
+            log('📋 测试步骤:');
+            log('1. 点击"模拟主应用登录"获取认证信息');
+            log('2. 点击"传递认证信息并加载微应用"测试自动登录');
+            log('3. 观察微应用是否跳过登录页面直接进入主界面');
+        });
+    </script>
+</body>
+</html> 

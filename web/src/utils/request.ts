@@ -81,8 +81,17 @@ request.interceptors.request.use((url: string, options: any) => {
   const data = convertTheKeysOfTheObjectToSnake(options.data);
   const params = convertTheKeysOfTheObjectToSnake(options.params);
 
+  let finalUrl = url;
+  if (window.__POWERED_BY_QIANKUN__) {
+    // Manually construct the full URL because the `prefix` option is not working reliably.
+    const publicPath = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__ || '';
+    // url is like '/v1/user/info'
+    finalUrl = `${publicPath.slice(0, -1)}${url}`;
+    console.log('[Request Interceptor] Final URL in Qiankun:', finalUrl);
+  }
+
   return {
-    url,
+    url: finalUrl,
     options: {
       ...options,
       data,

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue + RAGFlow 微应用集成示例</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .nav {
+            background: #34495e;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        
+        .nav button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .nav button:hover {
+            background: #2980b9;
+        }
+        
+        .nav button.active {
+            background: #e74c3c;
+        }
+        
+        .container {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: white;
+            padding: 1rem;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .content {
+            flex: 1;
+            background: white;
+            margin-left: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #ragflow-container {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .status {
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>🚀 Vue 主应用 + RAGFlow 微应用</h1>
+            <p>演示如何在 Vue 应用中集成 RAGFlow 微应用</p>
+        </div>
+        
+        <div class="nav">
+            <button @click="loadMicroApp" :class="{ active: isLoaded }">
+                {{ isLoaded ? '重新加载微应用' : '加载 RAGFlow 微应用' }}
+            </button>
+            <button @click="unloadMicroApp" :disabled="!isLoaded">
+                卸载微应用
+            </button>
+            <button @click="checkStatus">
+                检查状态
+            </button>
+        </div>
+        
+        <div class="container">
+            <div class="sidebar">
+                <h3>📊 状态信息</h3>
+                <div :class="'status ' + status.type">
+                    {{ status.message }}
+                </div>
+                
+                <h3>📝 操作日志</h3>
+                <div style="max-height: 300px; overflow-y: auto; font-size: 12px; font-family: monospace;">
+                    <div v-for="log in logs" :key="log.id" style="margin: 2px 0; padding: 2px;">
+                        <span style="color: #666;">[{{ log.time }}]</span> {{ log.message }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content">
+                <div id="ragflow-container">
+                    <div class="loading" v-if="!isLoaded">
+                        {{ loadingMessage }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- qiankun CDN -->
+    <script src="https://unpkg.com/qiankun@2.10.16/dist/index.umd.min.js"></script>
+    
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    isLoaded: false,
+                    loadingMessage: '等待加载微应用...',
+                    microApp: null,
+                    status: {
+                        type: 'info',
+                        message: '准备就绪'
+                    },
+                    logs: []
+                }
+            },
+            
+            mounted() {
+                this.log('Vue 应用已启动');
+                this.checkStatus();
+                
+                // 添加全局错误处理
+                window.addEventListener('error', (event) => {
+                    this.log(`全局错误: ${event.error?.message || event.message}`, 'error');
+                });
+                
+                // 添加 qiankun 错误处理
+                if (window.qiankun) {
+                    qiankun.addErrorHandler((error) => {
+                        this.log(`qiankun 错误: ${error.message}`, 'error');
+                        this.updateStatus(`qiankun 错误: ${error.message}`, 'error');
+                    });
+                }
+            },
+            
+            methods: {
+                log(message, type = 'info') {
+                    const now = new Date();
+                    const time = now.toLocaleTimeString();
+                    this.logs.unshift({
+                        id: Date.now(),
+                        time,
+                        message,
+                        type
+                    });
+                    
+                    // 限制日志数量
+                    if (this.logs.length > 50) {
+                        this.logs = this.logs.slice(0, 50);
+                    }
+                    
+                    console.log(`[${time}] ${message}`);
+                },
+                
+                updateStatus(message, type = 'info') {
+                    this.status = { message, type };
+                },
+                
+                async checkStatus() {
+                    try {
+                        const response = await fetch('http://localhost:9222/umi.js');
+                        if (response.ok) {
+                            this.updateStatus('✅ 微应用服务器运行正常', 'success');
+                            this.log('微应用服务器连接成功');
+                            
+                            const jsContent = await response.text();
+                            if (jsContent.includes('ragflow-web')) {
+                                this.log('✅ 检测到正确的 UMD 模块导出');
+                            }
+                            
+                            if (jsContent.includes('bootstrap') && jsContent.includes('mount')) {
+                                this.log('✅ 检测到 qiankun 生命周期函数');
+                            }
+                        } else {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                    } catch (error) {
+                        this.updateStatus(`❌ 无法连接到微应用服务器: ${error.message}`, 'error');
+                        this.log(`连接失败: ${error.message}`, 'error');
+                    }
+                },
+                
+                async loadMicroApp() {
+                    if (this.isLoaded && this.microApp) {
+                        this.log('重新加载微应用...');
+                        await this.unloadMicroApp();
+                    }
+                    
+                    this.log('开始加载 RAGFlow 微应用...');
+                    this.updateStatus('🔄 正在加载微应用...', 'info');
+                    this.loadingMessage = '正在加载 RAGFlow 微应用...';
+                    
+                    try {
+                                                 this.microApp = qiankun.loadMicroApp({
+                             name: 'ragflow',
+                             entry: 'http://localhost:9222/',
+                             container: '#ragflow-container',
+                             props: {
+                                 routerBase: '/ragflow',
+                                 parentApp: 'vue-demo'
+                             }
+                         });
+                        
+                        await this.microApp.mountPromise;
+                        
+                        this.isLoaded = true;
+                        this.log('✅ RAGFlow 微应用加载成功！');
+                        this.updateStatus('✅ 微应用已成功加载', 'success');
+                        
+                    } catch (error) {
+                        this.log(`❌ 微应用加载失败: ${error.message}`, 'error');
+                        this.updateStatus(`❌ 微应用加载失败: ${error.message}`, 'error');
+                        this.loadingMessage = `加载失败: ${error.message}`;
+                    }
+                },
+                
+                async unloadMicroApp() {
+                    if (!this.microApp) return;
+                    
+                    this.log('正在卸载微应用...');
+                    this.updateStatus('🔄 正在卸载微应用...', 'info');
+                    
+                    try {
+                        await this.microApp.unmount();
+                        this.microApp = null;
+                        this.isLoaded = false;
+                        
+                        // 清理容器
+                        const container = document.getElementById('ragflow-container');
+                        if (container) {
+                            container.innerHTML = '<div class="loading">微应用已卸载</div>';
+                        }
+                        
+                        this.loadingMessage = '微应用已卸载';
+                        this.log('✅ 微应用已成功卸载');
+                        this.updateStatus('✅ 微应用已卸载', 'success');
+                    } catch (error) {
+                        this.log(`❌ 卸载失败: ${error.message}`, 'error');
+                        this.updateStatus(`❌ 卸载失败: ${error.message}`, 'error');
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html> 

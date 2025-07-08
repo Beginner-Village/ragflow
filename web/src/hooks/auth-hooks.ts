@@ -1,4 +1,5 @@
-import authorizationUtil from '@/utils/authorization-util';
+import authorizationUtil, { autoLogin } from '@/utils/authorization-util';
+import { getSearchValue } from '@/utils/common-util';
 import { message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'umi';
@@ -45,10 +46,37 @@ export const useOAuthCallback = () => {
 export const useAuth = () => {
   const auth = useOAuthCallback();
   const [isLogin, setIsLogin] = useState<Nullable<boolean>>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLogin(!!authorizationUtil.getAuthorization() || !!auth);
+    const checkAuth = async () => {
+      setIsLoading(true);
+      const authorization = authorizationUtil.getAuthorization();
+      const hasAuth = !!authorization && authorization !== 'Bearer ';
+
+      if (hasAuth) {
+        setIsLogin(true);
+        setIsLoading(false);
+      } else {
+        // No valid token, attempt to auto-login
+        console.log('[useAuth] No token found, attempting auto-login...');
+        const loginSuccess = await autoLogin();
+        setIsLogin(loginSuccess);
+        setIsLoading(false);
+        if (!loginSuccess) {
+          console.error(
+            '[useAuth] Auto-login failed. The application will not be rendered.',
+          );
+        }
+      }
+    };
+
+    // The auth from the URL (OAuth) should take precedence.
+    const urlAuth = getSearchValue('auth');
+    if (!urlAuth) {
+      checkAuth();
+    }
   }, [auth]);
 
-  return { isLogin };
+  return { isLogin, isLoading };
 };
