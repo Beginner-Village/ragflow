@@ -39,7 +39,7 @@ export default defineConfig({
   proxy: [
     {
       context: ['/api', '/v1'],
-      target: 'http://127.0.0.1:9380/',
+      target: 'http://10.10.10.225:9380/',
       changeOrigin: true,
       ws: true,
       logger: console,
@@ -47,7 +47,7 @@ export default defineConfig({
     },
   ],
 
-  chainWebpack(memo, args) {
+  chainWebpack(memo: any, args: any) {
     memo.module.rule('markdown').test(/\.md$/).type('asset/source');
 
     memo.optimization.minimizer('terser').use(TerserPlugin); // Fixed the issue that the page displayed an error after packaging lexical with terser

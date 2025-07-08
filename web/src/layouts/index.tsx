@@ -1,8 +1,7 @@
-import { Divider, Layout, theme } from 'antd';
+import { Layout, theme } from 'antd';
 import React from 'react';
 import { Outlet } from 'umi';
 import '../locales/config';
-import Header from './components/header';
 
 import styles from './index.less';
 
@@ -16,8 +15,6 @@ const App: React.FC = () => {
   return (
     <Layout className={styles.layout}>
       <Layout>
-        <Header></Header>
-        <Divider orientationMargin={0} className={styles.divider} />
         <Content
           style={{
             minHeight: 280,
