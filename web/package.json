@@ -4,12 +4,16 @@
   "author": "bill",
   "scripts": {
     "build": "umi build",
+    "build:copy": "npm run build && cp -r public/pdfjs-dist dist/",
     "dev": "cross-env HMR=none UMI_DEV_SERVER_COMPRESS=none umi dev",
     "postinstall": "umi setup",
     "lint": "umi lint --eslint-only",
     "prepare": "cd .. && husky web/.husky",
+    "serve": "npm run build:copy && npm run start:prod",
     "setup": "umi setup",
     "start": "npm run dev",
+    "start:prod": "node simple-server.js",
+    "start:static": "cross-env NODE_ENV=development DISABLE_HOT_RELOAD=true DISABLE_DEV_INSPECTOR=true UMI_ENV=static REACT_APP_ENV=static BROWSER=none HMR=none ERROR_OVERLAY=none umi dev --port 2080",
     "test": "jest --no-cache --coverage"
   },
   "lint-staged": {
@@ -69,6 +73,7 @@
     "dayjs": "^1.11.10",
     "dompurify": "^3.1.6",
     "eventsource-parser": "^1.1.2",
+    "express": "^5.1.0",
     "human-id": "^4.1.1",
     "i18next": "^23.7.16",
     "i18next-browser-languagedetector": "^8.0.0",

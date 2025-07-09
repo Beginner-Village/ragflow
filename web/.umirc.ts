@@ -13,10 +13,7 @@ export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? '/ragflow/' : '/',
   routes,
   // 设置publicPath以支持微应用
-  publicPath:
-    process.env.NODE_ENV === 'production'
-      ? '/ragflow/'
-      : 'http://localhost:2080/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/ragflow/' : '/',
   esbuildMinifyIIFE: true,
   icons: {},
   hash: true,
@@ -32,7 +29,7 @@ export default defineConfig({
       defer: true,
     },
   ],
-  clickToComponent: {},
+  clickToComponent: process.env.DISABLE_DEV_INSPECTOR === 'true' ? false : {},
   history: {
     type: 'hash',
   },
@@ -45,14 +42,16 @@ export default defineConfig({
 
   runtimePublicPath: {},
 
-  // 修复开发环境配置
+  // 根据环境变量配置开发环境
   ...(process.env.NODE_ENV === 'development' && {
     // 开发环境特定配置
-    devtool: false,
-    fastRefresh: false,
+    fastRefresh: process.env.DISABLE_HOT_RELOAD !== 'true',
   }),
   plugins: [
-    '@react-dev-inspector/umi4-plugin',
+    // 根据环境变量决定是否加载开发者工具
+    ...(process.env.DISABLE_DEV_INSPECTOR !== 'true'
+      ? ['@react-dev-inspector/umi4-plugin']
+      : []),
     '@umijs/plugins/dist/tailwindcss',
     '@umijs/plugins/dist/qiankun',
   ],
@@ -66,10 +65,11 @@ export default defineConfig({
   copy: [
     { from: 'src/conf.json', to: 'dist/conf.json' },
     { from: 'node_modules/monaco-editor/min/vs/', to: 'dist/vs/' },
+    { from: 'public/pdfjs-dist/', to: 'dist/pdfjs-dist/' },
   ],
   proxy: {
     '/v1': {
-      target: 'http://10.10.10.225:9380',
+      target: 'http://ragflow_bk.luzhipeng.com',
       changeOrigin: true,
       onProxyRes: function (proxyRes, req, res) {
         proxyRes.headers['Access-Control-Allow-Origin'] = '*';
@@ -81,14 +81,6 @@ export default defineConfig({
     memo.module.rule('markdown').test(/\.md$/).type('asset/source');
 
     memo.optimization.minimizer('terser').use(TerserPlugin); // Fixed the issue that the page displayed an error after packaging lexical with terser
-
-    // Add CORS headers for dev server
-    memo.devServer.headers({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers':
-        'X-Requested-With, content-type, Authorization',
-    });
 
     return memo;
   },

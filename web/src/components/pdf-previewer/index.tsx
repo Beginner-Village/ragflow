@@ -5,6 +5,7 @@ import {
 import { IReferenceChunk } from '@/interfaces/database/chat';
 import { IChunk } from '@/interfaces/database/knowledge';
 import FileError from '@/pages/document-viewer/file-error';
+import { getPdfWorkerPath } from '@/utils/pdf-worker-util';
 import { Skeleton } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -62,7 +63,7 @@ const DocumentPreviewer = ({ chunk, documentId, visible }: IProps) => {
       <PdfLoader
         url={url}
         beforeLoad={<Skeleton active />}
-        workerSrc="/pdfjs-dist/pdf.worker.min.js"
+        workerSrc={getPdfWorkerPath()}
         errorMessage={<FileError>{error}</FileError>}
       >
         {(pdfDocument) => {

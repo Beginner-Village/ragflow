@@ -41,3 +41,35 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #888;
 }
+
+/* 根据环境变量隐藏开发者工具 */
+body[data-disable-dev-inspector='true'] {
+  /* 隐藏UMI开发者工具按钮 */
+  .__dumi-default-previewer-demo-toolbar,
+  .__dumi-default-tabs,
+  .__dumi-default-device-status,
+  [data-testid="umi-dev-tools"],
+  [class*="umi-dev"],
+  [class*="dev-tools"],
+  [data-id="umi-dev-tools"],
+  /* React DevTools 相关 */
+  #react-devtools-portal,
+  iframe[title*="React"],
+  iframe[src*="react-devtools"],
+  /* 可能的浮动调试按钮 */
+  button[title*="开发"],
+  button[title*="调试"],
+  button[title*="debug"],
+  button[title*="dev"],
+  .dev-inspector-btn,
+  .react-dev-inspector,
+  /* 通用的开发者工具容器 */
+  [id*="devtools"],
+  [class*="devtools"],
+  [data-component="DevTools"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}

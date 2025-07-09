@@ -12,6 +12,7 @@ import { useGetDocumentUrl } from './hooks';
 
 import { useCatchDocumentError } from '@/components/pdf-previewer/hooks';
 import FileError from '@/pages/document-viewer/file-error';
+import { getPdfWorkerPath } from '@/utils/pdf-worker-util';
 import styles from './index.less';
 
 interface IProps {
@@ -49,7 +50,7 @@ const Preview = ({ highlights: state, setWidthAndHeight }: IProps) => {
       <PdfLoader
         url={url}
         beforeLoad={<Skeleton active />}
-        workerSrc="/pdfjs-dist/pdf.worker.min.js"
+        workerSrc={getPdfWorkerPath()}
         errorMessage={<FileError>{error}</FileError>}
       >
         {(pdfDocument) => {

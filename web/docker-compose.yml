@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ragflow-web:
+    build: .
+    container_name: ragflow-web
+    ports:
+      - "2080:2080"
+    environment:
+      - NODE_ENV=production
+      - PORT=2080
+      - API_TARGET=http://host.docker.internal:9380
+    volumes:
+      # 可选：挂载日志目录
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:2080/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ragflow-network
+
+networks:
+  ragflow-network:
+    driver: bridge 

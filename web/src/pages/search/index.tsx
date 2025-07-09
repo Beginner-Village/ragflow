@@ -250,7 +250,8 @@ const SearchPage = () => {
       </Layout>
       {!isFirstRender &&
         !isSearchStrEmpty &&
-        !isEmpty(checkedWithoutEmbeddingIdList) && (
+        !isEmpty(checkedWithoutEmbeddingIdList) &&
+        process.env.DISABLE_DEV_INSPECTOR !== 'true' && (
           <Tooltip title={t('chunk.mind')} zIndex={1}>
             <FloatButton
               className={styles.mindMapFloatButton}
