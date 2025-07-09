@@ -51,6 +51,7 @@ const Preview = ({ highlights: state, setWidthAndHeight }: IProps) => {
         url={url}
         beforeLoad={<Skeleton active />}
         workerSrc={getPdfWorkerPath()}
+        workerSrc={getPdfWorkerPath()}
         errorMessage={<FileError>{error}</FileError>}
       >
         {(pdfDocument) => {

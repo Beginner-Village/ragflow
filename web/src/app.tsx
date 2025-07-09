@@ -41,13 +41,21 @@ const AntLanguageMap = {
   de: deDE,
 };
 
-if (process.env.NODE_ENV === 'development') {
+if (
+  process.env.NODE_ENV === 'development' &&
+  process.env.DISABLE_DEV_INSPECTOR !== 'true'
+) {
   const whyDidYouRender = require('@welldone-software/why-did-you-render');
   whyDidYouRender(React, {
     trackAllPureComponents: true,
     trackExtraHooks: [],
     logOnDifferentValues: true,
   });
+}
+
+// 根据环境变量设置body属性来控制开发者工具显示
+if (process.env.DISABLE_DEV_INSPECTOR === 'true') {
+  document.body.setAttribute('data-disable-dev-inspector', 'true');
 }
 
 const queryClient = new QueryClient();

@@ -1,4 +1,3 @@
-import { render, rootContainer } from './app';
 import authorizationUtil from './utils/authorization-util';
 
 function storeTestToken() {
@@ -37,10 +36,7 @@ export async function mount(props: any) {
     storeTestToken();
   }
 
-  // The official umi/qiankun plugin does not expose the render method by default,
-  // but if needed, you might need to call a render function here.
-  // We assume Umi handles the rendering automatically after mount.
-  render(props);
+  // UMI handles the rendering automatically, no need to call render manually
 }
 
 /**
@@ -49,14 +45,5 @@ export async function mount(props: any) {
  */
 export async function unmount(props: any) {
   console.log('[ragflow-web] unmounted');
-  const { container } = props;
-  const root = (
-    container ? container.querySelector('#root') : rootContainer
-  ) as any;
-  // The unmount method of the React instance is not standard
-  // and depends on the specific version and framework wrapper.
-  // For React 18, it should be root.unmount().
-  if (root && typeof root.unmount === 'function') {
-    root.unmount();
-  }
+  // UMI handles the unmounting automatically
 }
