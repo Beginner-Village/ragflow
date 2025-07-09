@@ -154,9 +154,73 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API请求处理
+  // API请求处理 - 转发到后端服务器
   if (pathname.startsWith('/v1/')) {
-    handleApiRequest(req, res, parsedUrl);
+    // 转发到后端API服务器
+    const backendUrl = 'http://10.10.10.225:9380';
+    const targetUrl = `${backendUrl}${req.url}`;
+
+    console.log(`🔄 转发API请求: ${req.url} -> ${targetUrl}`);
+
+    // 使用原生http模块转发请求
+    const http = require('http');
+    const https = require('https');
+    const url = require('url');
+
+    const parsedTarget = url.parse(targetUrl);
+    const requestModule = parsedTarget.protocol === 'https:' ? https : http;
+
+    const options = {
+      hostname: parsedTarget.hostname,
+      port:
+        parsedTarget.port || (parsedTarget.protocol === 'https:' ? 443 : 80),
+      path: parsedTarget.path,
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: parsedTarget.host,
+        origin: `${parsedTarget.protocol}//${parsedTarget.host}`,
+      },
+    };
+
+    const proxyReq = requestModule.request(options, (proxyRes) => {
+      // 设置CORS头
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      );
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-Requested-With, content-type, Authorization',
+      );
+
+      // 转发响应状态码和头部
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+
+      // 转发响应数据
+      proxyRes.pipe(res);
+    });
+
+    proxyReq.on('error', (err) => {
+      console.error('❌ API代理错误:', err.message);
+
+      // 返回模拟响应作为降级
+      res.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      });
+      res.end(
+        JSON.stringify({
+          code: 500,
+          message: `API服务暂时不可用: ${err.message}`,
+          data: null,
+        }),
+      );
+    });
+
+    // 转发请求体（对于POST/PUT请求）
+    req.pipe(proxyReq);
     return;
   }
 

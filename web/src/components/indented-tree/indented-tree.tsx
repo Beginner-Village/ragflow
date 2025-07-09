@@ -63,7 +63,8 @@ class IndentedNode extends BaseNode {
   }
 
   getKeyStyle(attributes: any) {
-    const [width, height] = this.getSize(attributes);
+    const size = this.getSize(attributes);
+    const [width, height] = Array.isArray(size) ? size : [100, 20]; // 提供默认值
     const keyStyle = super.getKeyStyle(attributes);
     return {
       width,
@@ -84,7 +85,8 @@ class IndentedNode extends BaseNode {
   }
 
   drawIconArea(attributes: any, container: any) {
-    const [, h] = this.getSize(attributes);
+    const size = this.getSize(attributes);
+    const [, h] = Array.isArray(size) ? size : [100, 20];
     const iconAreaStyle = {
       fill: 'transparent',
       height: 30,
@@ -106,7 +108,8 @@ class IndentedNode extends BaseNode {
   getCountStyle(attributes: any) {
     const { collapsed, color } = attributes;
     if (collapsed) {
-      const [, height] = this.getSize(attributes);
+      const size = this.getSize(attributes);
+      const [, height] = Array.isArray(size) ? size : [100, 20];
       return {
         backgroundFill: color,
         cursor: 'pointer',
@@ -146,7 +149,8 @@ class IndentedNode extends BaseNode {
   getCollapseStyle(attributes: any) {
     const { showIcon, color } = attributes;
     if (!this.isShowCollapse(attributes)) return false;
-    const [, height] = this.getSize(attributes);
+    const size = this.getSize(attributes);
+    const [, height] = Array.isArray(size) ? size : [100, 20];
     return {
       visibility: showIcon ? 'visible' : 'hidden',
       backgroundFill: color,
@@ -184,7 +188,8 @@ class IndentedNode extends BaseNode {
   getAddStyle(attributes: any) {
     const { collapsed, showIcon } = attributes;
     if (collapsed) return false;
-    const [, height] = this.getSize(attributes);
+    const size = this.getSize(attributes);
+    const [, height] = Array.isArray(size) ? size : [100, 20];
     const color = '#ddd';
     const lineWidth = 1;
 
@@ -221,8 +226,11 @@ class IndentedEdge extends Polyline {
     sourcePoint: Point,
     targetPoint: Point,
   ) {
-    const [sx] = sourcePoint;
-    const [, ty] = targetPoint;
+    // 确保Points是有效的数组
+    const sourceArray = Array.isArray(sourcePoint) ? sourcePoint : [0, 0];
+    const targetArray = Array.isArray(targetPoint) ? targetPoint : [0, 0];
+    const [sx] = sourceArray;
+    const [, ty] = targetArray;
     return [[sx, ty]] as any;
   }
 }

@@ -69,24 +69,20 @@ const findCombo = (communities: string[]) => {
 };
 
 export const buildNodesAndCombos = (nodes: any[]) => {
+  // 暂时禁用combo功能，使用简单的节点结构
   const combos: any[] = [];
-  nodes.forEach((x) => {
-    const combo = findCombo(x?.communities);
-    if (combo && combos.every((y) => y.data.label !== combo)) {
-      combos.push({
-        isCombo: true,
-        id: uuid(),
-        data: {
-          label: combo,
-        },
-      });
-    }
-  });
 
+  // 确保节点数据结构正确
   const nextNodes = nodes.map((x) => {
     return {
+      id: x.id || uuid(),
+      data: x.data || {},
+      entity_type: x.entity_type,
+      description: x.description,
+      weight: x.weight,
       ...x,
-      combo: combos.find((y) => y.data.label === findCombo(x?.communities))?.id,
+      // 暂时不使用combo
+      // combo: combos.find((y) => y.data.label === findCombo(x?.communities))?.id,
     };
   });
 

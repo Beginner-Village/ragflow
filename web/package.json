@@ -5,11 +5,14 @@
   "scripts": {
     "build": "umi build",
     "build:copy": "npm run build && cp -r public/pdfjs-dist dist/",
+    "build:micro": "cross-env MICRO_APP=true umi build",
     "dev": "cross-env HMR=none UMI_DEV_SERVER_COMPRESS=none umi dev",
+    "dev:micro": "cross-env MICRO_APP=true HMR=none UMI_DEV_SERVER_COMPRESS=none umi dev --port 2080",
     "postinstall": "umi setup",
     "lint": "umi lint --eslint-only",
     "prepare": "cd .. && husky web/.husky",
     "serve": "npm run build:copy && npm run start:prod",
+    "serve:micro": "npm run build:micro && cp -r public/pdfjs-dist dist/ && npm run start:prod",
     "setup": "umi setup",
     "start": "npm run dev",
     "start:prod": "node simple-server.js",
@@ -21,15 +24,21 @@
       "prettier --write --ignore-unknown"
     ]
   },
+  "overrides": {
+    "@radix-ui/react-dismissable-layer": "1.1.4"
+  },
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
     "@ant-design/pro-components": "^2.6.46",
     "@ant-design/pro-layout": "^7.17.16",
+    "@antv/g": "^6.1.25",
     "@antv/g2": "^5.2.10",
     "@antv/g6": "^5.0.10",
     "@hookform/resolvers": "^3.9.1",
     "@js-preview/excel": "^1.7.8",
+    "@lexical/code": "^0.33.0",
     "@lexical/react": "^0.23.1",
+    "@lexical/rich-text": "^0.33.0",
     "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.4",
@@ -81,10 +90,12 @@
     "input-otp": "^1.4.1",
     "js-base64": "^3.7.5",
     "jsencrypt": "^3.3.2",
+    "katex": "^0.16.22",
     "lexical": "^0.23.1",
     "lodash": "^4.17.21",
     "lucide-react": "^0.508.0",
     "mammoth": "^1.7.2",
+    "monaco-editor": "^0.52.2",
     "next-themes": "^0.4.6",
     "openai-speech-stream-player": "^1.0.8",
     "rc-tween-one": "^3.0.6",
@@ -152,8 +163,5 @@
   },
   "engines": {
     "node": ">=18.20.4"
-  },
-  "overrides": {
-    "@radix-ui/react-dismissable-layer": "1.1.4"
   }
 }

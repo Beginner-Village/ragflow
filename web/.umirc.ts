@@ -9,21 +9,21 @@ export default defineConfig({
   outputPath: 'dist',
   alias: { '@parent': path.resolve(__dirname, '../') },
   npmClient: 'npm',
-  // 设置base路径以区分不同资源代理
-  base: process.env.NODE_ENV === 'production' ? '/ragflow/' : '/',
+  // 修复路径配置 - 根据微应用运行环境动态设置
+  base: process.env.MICRO_APP === 'true' ? '/ragflow/' : '/',
   routes,
-  // 设置publicPath以支持微应用
-  publicPath: process.env.NODE_ENV === 'production' ? '/ragflow/' : '/',
+  // 修复publicPath配置
+  publicPath: process.env.MICRO_APP === 'true' ? '/ragflow/' : '/',
   esbuildMinifyIIFE: true,
   icons: {},
   hash: true,
   favicons: [
-    process.env.NODE_ENV === 'production' ? '/ragflow/logo.svg' : '/logo.svg',
+    process.env.MICRO_APP === 'true' ? '/ragflow/logo.svg' : '/logo.svg',
   ],
   headScripts: [
     {
       src:
-        process.env.NODE_ENV === 'production'
+        process.env.MICRO_APP === 'true'
           ? '/ragflow/iconfont.js'
           : '/iconfont.js',
       defer: true,
@@ -35,18 +35,17 @@ export default defineConfig({
   },
   // 暂时禁用 MFSU 来避免模块联邦错误
   mfsu: false,
-  // 添加qiankun微应用配置
-  qiankun: {
-    slave: {
-      // 微应用开发时的端口
-      devPort: 2080,
-      // 微应用的入口
-      entry:
-        process.env.NODE_ENV === 'production'
-          ? '/ragflow/'
-          : '//localhost:2080',
+  // 仅在微应用模式下启用qiankun配置
+  ...(process.env.MICRO_APP === 'true' && {
+    qiankun: {
+      slave: {
+        devPort: 2080,
+        entry: '//localhost:2080',
+        // 指定独立的qiankun配置文件
+        runtimeChunk: false,
+      },
     },
-  },
+  }),
 
   runtimePublicPath: {},
 
@@ -61,9 +60,12 @@ export default defineConfig({
       ? ['@react-dev-inspector/umi4-plugin']
       : []),
     '@umijs/plugins/dist/tailwindcss',
-    '@umijs/plugins/dist/qiankun',
-  ],
-  jsMinifier: 'none', // Fixed the issue that the page displayed an error after packaging lexical with terser
+    // 只在微应用模式下加载qiankun插件
+    ...(process.env.MICRO_APP === 'true'
+      ? ['@umijs/plugins/dist/qiankun']
+      : []),
+  ].filter(Boolean), // 过滤掉空值
+  jsMinifier: process.env.NODE_ENV === 'production' ? 'none' : 'esbuild', // Fixed the issue that the page displayed an error after packaging lexical with terser
   lessLoader: {
     modifyVars: {
       hack: `true; @import "~@/less/index.less";`,
@@ -77,7 +79,7 @@ export default defineConfig({
   ],
   proxy: {
     '/v1': {
-      target: 'http://ragflow_bk.luzhipeng.com',
+      target: 'http://10.10.10.225:9380',
       changeOrigin: true,
       onProxyRes: function (proxyRes, req, res) {
         proxyRes.headers['Access-Control-Allow-Origin'] = '*';

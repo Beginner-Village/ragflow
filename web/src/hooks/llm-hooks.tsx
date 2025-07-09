@@ -82,15 +82,28 @@ export const useSelectLlmOptionsByModelType = () => {
     const modelType = LlmModelType.Image2text;
     const modelTag = modelType.toUpperCase();
 
+    // 确保数据已加载且有效
+    if (!llmInfo || typeof llmInfo !== 'object') {
+      return [];
+    }
+
     return Object.entries(llmInfo)
       .map(([key, value]) => {
+        // 确保value是数组
+        if (!Array.isArray(value)) {
+          return { label: key, options: [] };
+        }
+
         return {
           label: key,
           options: value
             .filter(
               (x) =>
-                (x.model_type.includes(modelType) ||
-                  (x.tags && x.tags.includes(modelTag))) &&
+                x &&
+                (x.model_type?.includes(modelType) ||
+                  (x.tags &&
+                    Array.isArray(x.tags) &&
+                    x.tags.includes(modelTag))) &&
                 x.available,
             )
             .map(buildLlmOptionsWithIcon),
@@ -101,19 +114,31 @@ export const useSelectLlmOptionsByModelType = () => {
 
   const groupOptionsByModelType = useCallback(
     (modelType: LlmModelType) => {
+      // 确保数据已加载且有效
+      if (!llmInfo || typeof llmInfo !== 'object') {
+        return [];
+      }
+
       return Object.entries(llmInfo)
-        .filter(([, value]) =>
-          modelType
-            ? value.some((x) => x.model_type.includes(modelType))
-            : true,
-        )
+        .filter(([, value]) => {
+          if (!Array.isArray(value)) return false;
+          return modelType
+            ? value.some((x) => x && x.model_type?.includes(modelType))
+            : true;
+        })
         .map(([key, value]) => {
+          // 确保value是数组
+          if (!Array.isArray(value)) {
+            return { label: key, options: [] };
+          }
+
           return {
             label: key,
             options: value
               .filter(
                 (x) =>
-                  (modelType ? x.model_type.includes(modelType) : true) &&
+                  x &&
+                  (modelType ? x.model_type?.includes(modelType) : true) &&
                   x.available,
               )
               .map(buildLlmOptionsWithIcon),
@@ -143,7 +168,12 @@ export const useComposeLlmOptionsByModelTypes = (
 
   return modelTypes.reduce<
     (DefaultOptionType & {
-      options: { label: JSX.Element; value: string; disabled: boolean; is_tools: boolean }[];
+      options: {
+        label: JSX.Element;
+        value: string;
+        disabled: boolean;
+        is_tools: boolean;
+      }[];
     })[]
   >((pre, cur) => {
     const options = allOptions[cur];
@@ -200,15 +230,27 @@ export const useSelectLlmList = () => {
     useFetchLlmFactoryList();
 
   const nextMyLlmList: Array<LlmItem> = useMemo(() => {
+    // 确保数据已加载且有效
+    if (!myLlmList || !factoryList) {
+      return [];
+    }
+
     return Object.entries(myLlmList).map(([key, value]) => ({
       name: key,
       logo: factoryList.find((x) => x.name === key)?.logo ?? '',
       ...value,
-      llm: value.llm.map((x) => ({ ...x, name: x.name })),
+      llm: Array.isArray(value.llm)
+        ? value.llm.map((x) => ({ ...x, name: x.name }))
+        : [],
     }));
   }, [myLlmList, factoryList]);
 
   const nextFactoryList = useMemo(() => {
+    // 确保数据已加载且有效
+    if (!Array.isArray(factoryList) || !myLlmList) {
+      return [];
+    }
+
     const currentList = factoryList.filter((x) =>
       Object.keys(myLlmList).every((y) => y !== x.name),
     );

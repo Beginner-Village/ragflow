@@ -90,7 +90,13 @@ export const useHandleChunkMethodChange = () => {
   const chunkMethod = Form.useWatch('parser_id', form);
 
   useEffect(() => {
-    console.log('🚀 ~ useHandleChunkMethodChange ~ chunkMethod:', chunkMethod);
+    // 只在chunkMethod有值时输出日志，避免undefined警告
+    if (chunkMethod) {
+      console.log(
+        '🚀 ~ useHandleChunkMethodChange ~ chunkMethod:',
+        chunkMethod,
+      );
+    }
   }, [chunkMethod]);
 
   return { form, chunkMethod };
