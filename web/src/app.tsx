@@ -1,8 +1,10 @@
+import DevInfo from '@/components/dev-info';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import i18n from '@/locales/config';
+import { setupPdfWorker } from '@/utils/resource-path';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+// import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { App, ConfigProvider, ConfigProviderProps, theme } from 'antd';
 import pt_BR from 'antd/lib/locale/pt_BR';
 import deDE from 'antd/locale/de_DE';
@@ -83,8 +85,9 @@ function Root({ children }: React.PropsWithChildren) {
         </SidebarProvider>
         <Sonner position={'top-right'} expand richColors closeButton></Sonner>
         <Toaster />
+        <DevInfo />
       </ConfigProvider>
-      <ReactQueryDevtools buttonPosition={'top-left'} />
+      {/* <ReactQueryDevtools buttonPosition={'top-left'} /> */}
     </>
   );
 }
@@ -96,6 +99,9 @@ const RootProvider = ({ children }: React.PropsWithChildren) => {
     if (lng) {
       i18n.changeLanguage(lng);
     }
+
+    // 初始化 PDF Worker
+    setupPdfWorker().catch(console.error);
   }, []);
 
   return (

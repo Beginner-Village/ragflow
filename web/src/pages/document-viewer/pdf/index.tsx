@@ -1,5 +1,6 @@
 import { Authorization } from '@/constants/authorization';
 import { getAuthorization } from '@/utils/authorization-util';
+import { getPdfWorkerPath } from '@/utils/resource-path';
 import { Skeleton } from 'antd';
 import { PdfHighlighter, PdfLoader } from 'react-pdf-highlighter';
 import FileError from '../file-error';
@@ -26,7 +27,7 @@ const PdfPreviewer = ({ url }: IProps) => {
         url={url}
         httpHeaders={httpHeaders}
         beforeLoad={<Skeleton active />}
-        workerSrc="/pdfjs-dist/pdf.worker.min.js"
+        workerSrc={getPdfWorkerPath()}
         errorMessage={<FileError>{error}</FileError>}
         onError={(e) => {
           console.warn(e);

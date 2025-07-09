@@ -13,10 +13,7 @@ export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? '/ragflow/' : '/',
   routes,
   // 设置publicPath以支持微应用
-  publicPath:
-    process.env.NODE_ENV === 'production'
-      ? '/ragflow/'
-      : 'http://localhost:2080/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/ragflow/' : '/',
   esbuildMinifyIIFE: true,
   icons: {},
   hash: true,
@@ -40,7 +37,15 @@ export default defineConfig({
   mfsu: false,
   // 添加qiankun微应用配置
   qiankun: {
-    slave: {},
+    slave: {
+      // 微应用开发时的端口
+      devPort: 2080,
+      // 微应用的入口
+      entry:
+        process.env.NODE_ENV === 'production'
+          ? '/ragflow/'
+          : '//localhost:2080',
+    },
   },
 
   runtimePublicPath: {},
@@ -81,6 +86,14 @@ export default defineConfig({
     memo.module.rule('markdown').test(/\.md$/).type('asset/source');
 
     memo.optimization.minimizer('terser').use(TerserPlugin); // Fixed the issue that the page displayed an error after packaging lexical with terser
+
+    // 微前端相关配置
+    if (process.env.NODE_ENV === 'production') {
+      // 生产环境配置 UMD 输出
+      memo.output.libraryTarget('umd');
+      memo.output.library('ragflow-react');
+      memo.output.globalObject('window');
+    }
 
     // Add CORS headers for dev server
     memo.devServer.headers({
