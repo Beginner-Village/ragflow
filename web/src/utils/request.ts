@@ -3,19 +3,25 @@ import { ResponseType } from '@/interfaces/database/base';
 import i18n from '@/locales/config';
 import authorizationUtil, {
   getAuthorization,
-  redirectToLogin,
 } from '@/utils/authorization-util';
+import { convertTheKeysOfTheObjectToSnake } from '@/utils/common-util';
+import { getApiPrefix } from '@/utils/path-util';
 import { message, notification } from 'antd';
-import { RequestMethod, extend } from 'umi-request';
-import { convertTheKeysOfTheObjectToSnake } from './common-util';
+import type { RequestMethod } from 'umi-request';
+import { extend } from 'umi-request';
+
+const redirectToLogin = () => {
+  const currentPath = window.location.pathname + window.location.search;
+  const loginPath = currentPath.includes('/ynetflow')
+    ? '/ynetflow/#/login'
+    : '/#/login';
+  window.location.href = loginPath;
+};
 
 const FAILED_TO_FETCH = 'Failed to fetch';
 
-const RetcodeMessage = {
+const RetcodeMessage: Record<number, string> = {
   200: i18n.t('message.200'),
-  201: i18n.t('message.201'),
-  202: i18n.t('message.202'),
-  204: i18n.t('message.204'),
   400: i18n.t('message.400'),
   401: i18n.t('message.401'),
   403: i18n.t('message.403'),
@@ -29,6 +35,7 @@ const RetcodeMessage = {
   503: i18n.t('message.503'),
   504: i18n.t('message.504'),
 };
+
 type ResultCode =
   | 200
   | 201
@@ -77,67 +84,142 @@ const request: RequestMethod = extend({
   getResponse: true,
 });
 
-request.interceptors.request.use((url: string, options: any) => {
-  const data = convertTheKeysOfTheObjectToSnake(options.data);
-  const params = convertTheKeysOfTheObjectToSnake(options.params);
+// 防止重复注册拦截器
+let interceptorsRegistered = false;
 
-  let finalUrl = url;
-  if (window.__POWERED_BY_QIANKUN__) {
-    // Manually construct the full URL because the `prefix` option is not working reliably.
-    const publicPath = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__ || '';
-    // url is like '/v1/user/info'
-    finalUrl = `${publicPath.slice(0, -1)}${url}`;
-    console.log('[Request Interceptor] Final URL in Qiankun:', finalUrl);
-  }
+// 创建一个重试函数来处理401错误
+async function handleRetryRequest(
+  originalUrl: string,
+  originalOptions: any,
+): Promise<any> {
+  console.log('[Request] Starting retry process for:', originalUrl);
 
-  return {
-    url: finalUrl,
-    options: {
-      ...options,
-      data,
-      params,
-      headers: {
-        ...(options.skipToken
-          ? undefined
-          : { [Authorization]: getAuthorization() }),
-        ...options.headers,
-      },
-      interceptors: true,
-    },
-  };
-});
+  try {
+    // 尝试自动登录
+    const { autoLogin } = await import('@/utils/authorization-util');
+    const loginSuccess = await autoLogin();
 
-request.interceptors.response.use(async (response: Response, options) => {
-  if (response?.status === 413 || response?.status === 504) {
-    message.error(RetcodeMessage[response?.status as ResultCode]);
-  }
+    if (loginSuccess) {
+      console.log(
+        '[Request] Auto-login successful, retrying original request...',
+      );
 
-  if (options.responseType === 'blob') {
-    return response;
-  }
+      // 重新发起原始请求，标记为重试
+      const retryResponse = await request(originalUrl, {
+        ...originalOptions,
+        __isRetry: true, // 标记为重试请求
+        headers: {
+          ...originalOptions.headers,
+          [Authorization]: getAuthorization(), // 使用新的token
+        },
+      });
 
-  const data: ResponseType = await response?.clone()?.json();
-  if (data?.code === 100) {
-    message.error(data?.message);
-  } else if (data?.code === 401) {
-    notification.error({
-      message: data?.message,
-      description: data?.message,
-      duration: 3,
-    });
-    authorizationUtil.removeAll();
+      console.log('[Request] Retry successful');
+      return retryResponse;
+    } else {
+      console.error('[Request] Auto-login failed');
+      redirectToLogin();
+      throw new Error('Auto-login failed');
+    }
+  } catch (error) {
+    console.error('[Request] Error during retry:', error);
     redirectToLogin();
-  } else if (data?.code !== 0) {
-    notification.error({
-      message: `${i18n.t('message.hint')} : ${data?.code}`,
-      description: data?.message,
-      duration: 3,
-    });
+    throw error;
   }
-  return response;
-});
+}
 
-export default request;
+function setupRequestInterceptors() {
+  if (interceptorsRegistered) {
+    console.log('[Request] 拦截器已注册，跳过重复注册');
+    return;
+  }
+
+  request.interceptors.request.use((url: string, options: any) => {
+    const data = convertTheKeysOfTheObjectToSnake(options.data);
+    const params = convertTheKeysOfTheObjectToSnake(options.params);
+
+    let finalUrl = url;
+    const apiPrefix = getApiPrefix();
+    // Prefix the API url in micro-app mode.
+    if (apiPrefix && !url.startsWith('http')) {
+      finalUrl = `${apiPrefix}${url}`;
+    }
+
+    return {
+      url: finalUrl,
+      options: {
+        ...options,
+        data,
+        params,
+        __url: url, // 保存原始URL用于重试
+        headers: {
+          ...(options.skipToken
+            ? undefined
+            : { [Authorization]: getAuthorization() }),
+          ...options.headers,
+        },
+        interceptors: true,
+      },
+    };
+  });
+
+  request.interceptors.response.use(async (response: Response, options) => {
+    if (response?.status === 413 || response?.status === 504) {
+      message.error(RetcodeMessage[response?.status as ResultCode]);
+    }
+
+    if (options.responseType === 'blob') {
+      return response;
+    }
+
+    const data: ResponseType = await response?.clone()?.json();
+    if (data?.code === 100) {
+      message.error(data?.message);
+    } else if (data?.code === 401) {
+      // 检查是否是重试请求，避免无限循环
+      if (options.__isRetry) {
+        console.log('[Request] Retry request also got 401, stopping retry');
+        authorizationUtil.removeAll();
+        redirectToLogin();
+        throw new Error('Authentication failed after retry');
+      }
+
+      console.log('[Request] 401 detected, starting retry process...');
+      authorizationUtil.removeAll();
+
+      // 获取原始请求URL
+      const originalUrl = (options as any).__url;
+
+      // 执行重试逻辑，返回重试后的响应
+      // 这样前端就收不到401错误，而是直接收到重试后的正确响应
+      return await handleRetryRequest(originalUrl, options);
+    } else if (data?.code !== 0) {
+      notification.error({
+        message: `${i18n.t('message.hint')} : ${data?.code}`,
+        description: data?.message,
+        duration: 3,
+      });
+    }
+    return response;
+  });
+
+  interceptorsRegistered = true;
+  console.log('[Request] 拦截器注册完成');
+}
+
+// 清理请求拦截器
+export function clearRequestInterceptors() {
+  if (interceptorsRegistered) {
+    // 注意：umi-request 可能没有直接的清理方法，我们通过标记来避免重复注册
+    interceptorsRegistered = false;
+    console.log('[Request] 拦截器状态已重置');
+  }
+}
+
+// 初始化时注册拦截器
+setupRequestInterceptors();
+
+export { request as default };
 
 export const get = (url: string) => {
   return request.get(url);

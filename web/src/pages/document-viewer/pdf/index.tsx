@@ -1,6 +1,6 @@
 import { Authorization } from '@/constants/authorization';
 import { getAuthorization } from '@/utils/authorization-util';
-import { getPdfWorkerPath } from '@/utils/resource-path';
+import { getPdfWorkerPath } from '@/utils/path-util';
 import { Skeleton } from 'antd';
 import { PdfHighlighter, PdfLoader } from 'react-pdf-highlighter';
 import FileError from '../file-error';

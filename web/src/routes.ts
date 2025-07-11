@@ -139,6 +139,10 @@ const routes = [
         path: '/search',
         component: '@/pages/search',
       },
+      {
+        path: '/model-setting',
+        component: '@/pages/model-setting',
+      },
     ],
   },
   {
@@ -146,6 +150,12 @@ const routes = [
     component: '@/pages/document-viewer',
     layout: false,
   },
+  // {
+  //   path: '/model-setting',
+  //   component: '@/pages/model-setting',
+  //   layout: false,
+  //   wrappers: ['@/wrappers/auth'],
+  // },
   {
     path: '/*',
     component: '@/pages/404',

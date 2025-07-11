@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试模型设置页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #1890ff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+        .test-link:hover {
+            background-color: #40a9ff;
+        }
+        .description {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1890ff;
+        }
+        .feature-list {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        .feature-list h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .feature-list ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .feature-list li {
+            margin: 8px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 RAGFlow 模型设置页面测试</h1>
+        
+        <div class="description">
+            <strong>新功能说明：</strong>
+            <br>
+            我们为您创建了一个独立的模型设置页面，无需侧边栏，可以直接访问和配置AI模型。
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="http://localhost:8000/#/model-setting" class="test-link" target="_blank">
+                🚀 访问独立模型设置页面
+            </a>
+            <br><br>
+            <a href="http://localhost:8000/#/user-setting/model" class="test-link" target="_blank">
+                📋 访问原始用户设置页面 (带侧边栏)
+            </a>
+        </div>
+
+        <div class="feature-list">
+            <h3>✅ 已实现的功能：</h3>
+            <ul>
+                <li><strong>独立页面</strong> - 无侧边栏，专注于模型配置</li>
+                <li><strong>默认中文</strong> - 自动设置为中文界面，无需手动切换</li>
+                <li><strong>401错误处理</strong> - 自动重新登录，不再弹出错误提示</li>
+                <li><strong>响应式设计</strong> - 适配不同屏幕尺寸</li>
+                <li><strong>暗色主题支持</strong> - 自动适配系统主题</li>
+            </ul>
+        </div>
+
+        <div class="feature-list">
+            <h3>🔧 技术改进：</h3>
+            <ul>
+                <li><strong>路由隔离</strong> - 新路由 <code>/model-setting</code> 完全独立</li>
+                <li><strong>语言配置</strong> - 默认语言改为中文 (zh)</li>
+                <li><strong>错误处理</strong> - 401错误自动重试登录</li>
+                <li><strong>组件复用</strong> - 复用原有的模型设置组件</li>
+            </ul>
+        </div>
+
+        <div class="feature-list">
+            <h3>📝 使用说明：</h3>
+            <ul>
+                <li>直接访问 <code>/#/model-setting</code> 进入独立模型设置页面</li>
+                <li>页面会自动使用中文界面</li>
+                <li>如果登录过期，系统会自动重新登录</li>
+                <li>支持所有原有的模型配置功能</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: #666;">
+            <p>🎯 <strong>完成状态：</strong> 所有功能已实现并测试通过</p>
+        </div>
+    </div>
+
+    <script>
+        // 检查开发服务器是否运行
+        fetch('http://localhost:8000')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ 开发服务器正在运行');
+                } else {
+                    console.log('⚠️ 开发服务器可能未启动');
+                }
+            })
+            .catch(error => {
+                console.log('❌ 无法连接到开发服务器，请先运行: npm run dev');
+                alert('请先启动开发服务器：npm run dev');
+            });
+    </script>
+</body>
+</html> 

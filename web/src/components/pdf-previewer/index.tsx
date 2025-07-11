@@ -5,7 +5,7 @@ import {
 import { IReferenceChunk } from '@/interfaces/database/chat';
 import { IChunk } from '@/interfaces/database/knowledge';
 import FileError from '@/pages/document-viewer/file-error';
-import { getPdfWorkerPath } from '@/utils/resource-path';
+import { getPdfWorkerPath } from '@/utils/path-util';
 import { Skeleton } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import {

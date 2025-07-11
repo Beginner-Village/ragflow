@@ -3,11 +3,11 @@
 
 // qiankun 生命周期函数
 export async function bootstrap(props: any) {
-  console.log('ragflow微应用bootstrap', props);
+  console.log('ynetflow微应用bootstrap', props);
 }
 
 export async function mount(props: any) {
-  console.log('ragflow微应用mount', props);
+  console.log('ynetflow微应用mount', props);
 
   // 处理微应用路由
   if (props?.routerBase) {
@@ -38,7 +38,7 @@ export async function mount(props: any) {
 }
 
 export async function unmount(props: any) {
-  console.log('ragflow微应用unmount', props);
+  console.log('ynetflow微应用unmount', props);
 
   // 清理认证信息
   try {
@@ -51,7 +51,7 @@ export async function unmount(props: any) {
 }
 
 export async function update(props: any) {
-  console.log('ragflow微应用update', props);
+  console.log('ynetflow微应用update', props);
 
   // 更新认证信息
   if (props?.authInfo) {

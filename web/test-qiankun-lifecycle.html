@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 qiankun 生命周期函数导出</title>
+</head>
+<body>
+    <h1>测试 qiankun 生命周期函数导出</h1>
+    <div id="container"></div>
+    
+    <script>
+        console.log('🔍 开始测试 qiankun 生命周期函数导出');
+        
+        // 模拟 qiankun 环境
+        window.__POWERED_BY_QIANKUN__ = true;
+        
+        function testLifecycleExport() {
+            const script = document.createElement('script');
+            script.src = 'http://localhost:8100/umi.32a9985e.js';
+            script.onload = function() {
+                console.log('✅ UMD 文件加载完成');
+                
+                // 检查全局变量
+                console.log('🔍 检查全局变量 window.RAGFlow:', window.RAGFlow);
+                
+                if (window.RAGFlow) {
+                    const exports = window.RAGFlow;
+                    console.log('📋 RAGFlow 导出的属性:', Object.keys(exports));
+                    
+                    // 检查生命周期函数
+                    const lifecycleFunctions = ['bootstrap', 'mount', 'unmount', 'update'];
+                    lifecycleFunctions.forEach(fn => {
+                        if (typeof exports[fn] === 'function') {
+                            console.log(`✅ ${fn}: 函数已正确导出`);
+                        } else {
+                            console.error(`❌ ${fn}: 函数未找到或类型错误`, typeof exports[fn]);
+                        }
+                    });
+                    
+                    // 尝试调用 bootstrap 函数
+                    if (typeof exports.bootstrap === 'function') {
+                        console.log('🧪 测试调用 bootstrap 函数');
+                        exports.bootstrap({}).then(() => {
+                            console.log('✅ bootstrap 函数调用成功');
+                        }).catch(err => {
+                            console.error('❌ bootstrap 函数调用失败:', err);
+                        });
+                    }
+                } else {
+                    console.error('❌ 全局变量 window.RAGFlow 未找到');
+                }
+            };
+            
+            script.onerror = function() {
+                console.error('❌ UMD 文件加载失败');
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // 延迟执行测试，确保页面完全加载
+        setTimeout(testLifecycleExport, 100);
+    </script>
+</body>
+</html> 

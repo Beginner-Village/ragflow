@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 RAGFlow UMD 微应用</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .micro-app {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .log {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #40a9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RAGFlow UMD 微应用测试</h1>
+        
+        <div class="log" id="log">
+            <div>🔧 开始测试...</div>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="loadMicroApp()">加载微应用</button>
+            <button class="btn" onclick="mountMicroApp()">挂载微应用</button>
+            <button class="btn" onclick="unmountMicroApp()">卸载微应用</button>
+            <button class="btn" onclick="clearLog()">清空日志</button>
+        </div>
+        
+        <div id="micro-app-container" class="micro-app">
+            <div style="text-align: center; padding: 50px; color: #999;">
+                微应用将在这里显示
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let microAppModule = null;
+        let isMounted = false;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${time}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div>🔧 日志已清空</div>';
+        }
+
+        // 模拟 qiankun 环境
+        window.__POWERED_BY_QIANKUN__ = true;
+        window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__ = '/ragflow/';
+
+        function loadMicroApp() {
+            log('🔄 开始加载 UMD 脚本...');
+            
+            // 加载 CSS
+            const cssLink = document.createElement('link');
+            cssLink.rel = 'stylesheet';
+            cssLink.href = '/ragflow/umi.bffebfd4.css';
+            cssLink.onload = () => log('✅ CSS 加载成功');
+            cssLink.onerror = () => log('❌ CSS 加载失败');
+            document.head.appendChild(cssLink);
+            
+            // 加载主 JS
+            const script = document.createElement('script');
+            script.src = '/ragflow/umi.937a33db.js';
+            script.onload = () => {
+                log('✅ UMD 脚本加载成功');
+                
+                // 检查全局变量
+                if (window['RAGFlow-umi']) {
+                    microAppModule = window['RAGFlow-umi'];
+                    log('✅ 找到 UMD 模块: RAGFlow-umi');
+                    
+                    // 检查生命周期函数
+                    if (microAppModule.mount && microAppModule.unmount) {
+                        log('✅ 生命周期函数存在');
+                    } else {
+                        log('❌ 生命周期函数不存在');
+                    }
+                } else {
+                    log('❌ 未找到 UMD 模块');
+                    log('🔍 可用的全局变量:', Object.keys(window).filter(k => k.includes('RAGFlow')));
+                }
+            };
+            script.onerror = () => {
+                log('❌ UMD 脚本加载失败');
+            };
+            document.head.appendChild(script);
+        }
+
+        function mountMicroApp() {
+            if (!microAppModule) {
+                log('❌ 微应用模块未加载，请先加载');
+                return;
+            }
+            
+            if (isMounted) {
+                log('⚠️ 微应用已挂载');
+                return;
+            }
+            
+            log('🔄 开始挂载微应用...');
+            
+            try {
+                const container = document.getElementById('micro-app-container');
+                container.innerHTML = '<div id="root"></div>';
+                
+                const mountResult = microAppModule.mount({
+                    container: container,
+                    routerBase: '/ragflow/',
+                });
+                
+                if (mountResult && mountResult.then) {
+                    mountResult.then(() => {
+                        log('✅ 微应用挂载成功');
+                        isMounted = true;
+                    }).catch(err => {
+                        log('❌ 微应用挂载失败: ' + err.message);
+                    });
+                } else {
+                    log('✅ 微应用挂载成功');
+                    isMounted = true;
+                }
+            } catch (error) {
+                log('❌ 挂载过程出错: ' + error.message);
+            }
+        }
+
+        function unmountMicroApp() {
+            if (!microAppModule || !isMounted) {
+                log('❌ 微应用未挂载');
+                return;
+            }
+            
+            log('🔄 开始卸载微应用...');
+            
+            try {
+                const unmountResult = microAppModule.unmount({
+                    container: document.getElementById('micro-app-container'),
+                });
+                
+                if (unmountResult && unmountResult.then) {
+                    unmountResult.then(() => {
+                        log('✅ 微应用卸载成功');
+                        isMounted = false;
+                    }).catch(err => {
+                        log('❌ 微应用卸载失败: ' + err.message);
+                    });
+                } else {
+                    log('✅ 微应用卸载成功');
+                    isMounted = false;
+                }
+            } catch (error) {
+                log('❌ 卸载过程出错: ' + error.message);
+            }
+        }
+
+        // 页面加载完成后自动开始测试
+        window.addEventListener('load', () => {
+            log('✅ 测试页面加载完成');
+            log('🌐 当前地址: ' + window.location.href);
+            log('🔧 qiankun 环境变量已设置');
+        });
+    </script>
+</body>
+</html> 

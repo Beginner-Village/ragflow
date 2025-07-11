@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>微应用 UMD 格式测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+    
+    .test-section h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .button-group {
+      margin: 10px 0;
+    }
+    
+    .button {
+      padding: 8px 16px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .button-primary {
+      background-color: #1890ff;
+      color: white;
+    }
+    
+    .button-danger {
+      background-color: #ff4d4f;
+      color: white;
+    }
+    
+    .button-secondary {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    
+    .log-container {
+      background-color: #f8f8f8;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      padding: 15px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    
+    .status.success {
+      background-color: #f6ffed;
+      color: #52c41a;
+      border: 1px solid #b7eb8f;
+    }
+    
+    .status.error {
+      background-color: #fff2f0;
+      color: #ff4d4f;
+      border: 1px solid #ffccc7;
+    }
+    
+    .status.warning {
+      background-color: #fffbe6;
+      color: #faad14;
+      border: 1px solid #ffe58f;
+    }
+    
+    .micro-app-container {
+      border: 2px solid #1890ff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      min-height: 400px;
+      background-color: #fafafa;
+    }
+    
+    .info-card {
+      background-color: #e6f7ff;
+      border: 1px solid #91d5ff;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 RagFlow 微应用 UMD 格式测试</h1>
+    
+    <div class="info-card">
+      <h4>测试说明</h4>
+      <p>此页面用于测试 RagFlow 微应用的 UMD 格式打包和生命周期管理功能。</p>
+      <p>请确保已使用 <code>MICRO_APP=true npm run build</code> 构建微应用。</p>
+    </div>
+    
+    <!-- 状态显示 -->
+    <div class="test-section">
+      <h3>📊 当前状态</h3>
+      <div id="status-container">
+        <div class="status warning">未开始测试</div>
+      </div>
+    </div>
+    
+    <!-- 生命周期测试 -->
+    <div class="test-section">
+      <h3>🔄 生命周期管理测试</h3>
+      <div class="button-group">
+        <button class="button button-primary" onclick="testBootstrap()">Bootstrap</button>
+        <button class="button button-primary" onclick="testMount()">Mount</button>
+        <button class="button button-danger" onclick="testUnmount()">Unmount</button>
+        <button class="button button-secondary" onclick="testUpdate()">Update</button>
+      </div>
+      <div>
+        <strong>活跃请求数量:</strong> <span id="active-requests">0</span>
+        <button class="button button-secondary" onclick="updateRequestCount()">刷新</button>
+      </div>
+    </div>
+    
+    <!-- UMD 格式测试 -->
+    <div class="test-section">
+      <h3>📦 UMD 格式测试</h3>
+      <div class="button-group">
+        <button class="button button-primary" onclick="loadUMDScript()">加载 UMD 脚本</button>
+        <button class="button button-secondary" onclick="checkGlobalExports()">检查全局导出</button>
+        <button class="button button-secondary" onclick="testRouteChange()">模拟路由切换</button>
+      </div>
+    </div>
+    
+    <!-- 日志显示 -->
+    <div class="test-section">
+      <h3>📝 测试日志</h3>
+      <div class="button-group">
+        <button class="button button-secondary" onclick="clearLogs()">清空日志</button>
+      </div>
+      <div id="log-container" class="log-container"></div>
+    </div>
+    
+    <!-- 微应用容器 -->
+    <div class="test-section">
+      <h3>🏠 微应用容器</h3>
+      <div id="micro-app-container" class="micro-app-container">
+        <p>微应用将在这里加载...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 日志管理
+    const logContainer = document.getElementById('log-container');
+    const statusContainer = document.getElementById('status-container');
+    const activeRequestsSpan = document.getElementById('active-requests');
+    
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.innerHTML = `[${timestamp}] ${message}`;
+      logEntry.style.color = type === 'error' ? '#ff4d4f' : 
+                           type === 'success' ? '#52c41a' : 
+                           type === 'warning' ? '#faad14' : '#333';
+      logContainer.appendChild(logEntry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    function updateStatus(message, type = 'info') {
+      statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`;
+    }
+    
+    function clearLogs() {
+      logContainer.innerHTML = '';
+    }
+    
+    // 微应用管理
+    let ragflowApp = null;
+    let isAppMounted = false;
+    
+    // 模拟主应用传递的 props
+    const mockProps = {
+      routerBase: '/ragflow/',
+      authInfo: {
+        token: 'test-token-123',
+        userId: 'test-user'
+      }
+    };
+    
+    // 生命周期测试函数
+    async function testBootstrap() {
+      try {
+        log('🚀 开始 Bootstrap 测试...', 'info');
+        
+        if (!ragflowApp) {
+          log('❌ 微应用未加载', 'error');
+          updateStatus('微应用未加载', 'error');
+          return;
+        }
+        
+        if (ragflowApp.bootstrap) {
+          await ragflowApp.bootstrap(mockProps);
+          log('✅ Bootstrap 成功', 'success');
+          updateStatus('Bootstrap 完成', 'success');
+        } else {
+          log('❌ Bootstrap 方法不存在', 'error');
+        }
+      } catch (error) {
+        log(`❌ Bootstrap 失败: ${error.message}`, 'error');
+        updateStatus('Bootstrap 失败', 'error');
+      }
+    }
+    
+    async function testMount() {
+      try {
+        log('📦 开始 Mount 测试...', 'info');
+        
+        if (!ragflowApp) {
+          log('❌ 微应用未加载', 'error');
+          updateStatus('微应用未加载', 'error');
+          return;
+        }
+        
+        if (isAppMounted) {
+          log('⚠️ 应用已挂载，先卸载', 'warning');
+          await testUnmount();
+        }
+        
+        if (ragflowApp.mount) {
+          await ragflowApp.mount(mockProps);
+          isAppMounted = true;
+          log('✅ Mount 成功', 'success');
+          updateStatus('应用已挂载', 'success');
+          updateRequestCount();
+        } else {
+          log('❌ Mount 方法不存在', 'error');
+        }
+      } catch (error) {
+        log(`❌ Mount 失败: ${error.message}`, 'error');
+        updateStatus('Mount 失败', 'error');
+      }
+    }
+    
+    async function testUnmount() {
+      try {
+        log('📤 开始 Unmount 测试...', 'info');
+        
+        if (!ragflowApp) {
+          log('❌ 微应用未加载', 'error');
+          return;
+        }
+        
+        if (ragflowApp.unmount) {
+          await ragflowApp.unmount(mockProps);
+          isAppMounted = false;
+          log('✅ Unmount 成功', 'success');
+          updateStatus('应用已卸载', 'warning');
+          updateRequestCount();
+        } else {
+          log('❌ Unmount 方法不存在', 'error');
+        }
+      } catch (error) {
+        log(`❌ Unmount 失败: ${error.message}`, 'error');
+        updateStatus('Unmount 失败', 'error');
+      }
+    }
+    
+    async function testUpdate() {
+      try {
+        log('🔄 开始 Update 测试...', 'info');
+        
+        if (!ragflowApp) {
+          log('❌ 微应用未加载', 'error');
+          return;
+        }
+        
+        const updateProps = {
+          ...mockProps,
+          authInfo: {
+            ...mockProps.authInfo,
+            token: 'updated-token-456'
+          }
+        };
+        
+        if (ragflowApp.update) {
+          await ragflowApp.update(updateProps);
+          log('✅ Update 成功', 'success');
+          updateStatus('应用已更新', 'success');
+        } else {
+          log('❌ Update 方法不存在', 'error');
+        }
+      } catch (error) {
+        log(`❌ Update 失败: ${error.message}`, 'error');
+        updateStatus('Update 失败', 'error');
+      }
+    }
+    
+    // UMD 格式测试
+    function loadUMDScript() {
+      log('📦 开始加载 UMD 脚本...', 'info');
+      
+      // 检查是否已加载
+      if (window.ragflow || window.ragflowLifecycles) {
+        log('⚠️ UMD 脚本已加载', 'warning');
+        ragflowApp = window.ragflow || window.ragflowLifecycles;
+        updateStatus('UMD 脚本已加载', 'success');
+        return;
+      }
+      
+      // 动态加载 UMD 脚本
+      const script = document.createElement('script');
+      script.src = '/dist/umi.js'; // 假设这是 UMD 格式的文件
+      script.onload = () => {
+        log('✅ UMD 脚本加载成功', 'success');
+        ragflowApp = window.ragflow || window.ragflowLifecycles;
+        updateStatus('UMD 脚本加载成功', 'success');
+        checkGlobalExports();
+      };
+      script.onerror = () => {
+        log('❌ UMD 脚本加载失败', 'error');
+        updateStatus('UMD 脚本加载失败', 'error');
+      };
+      
+      document.head.appendChild(script);
+    }
+    
+    function checkGlobalExports() {
+      log('🔍 检查全局导出...', 'info');
+      
+      const exports = [];
+      
+      if (window.ragflow) {
+        exports.push('window.ragflow');
+      }
+      
+      if (window.ragflowLifecycles) {
+        exports.push('window.ragflowLifecycles');
+      }
+      
+      if (window.ragflowMicroApp) {
+        exports.push('window.ragflowMicroApp');
+      }
+      
+      if (exports.length > 0) {
+        log(`✅ 找到全局导出: ${exports.join(', ')}`, 'success');
+        
+        // 检查生命周期方法
+        const app = window.ragflow || window.ragflowLifecycles || window.ragflowMicroApp;
+        if (app) {
+          const methods = ['bootstrap', 'mount', 'unmount', 'update'];
+          const availableMethods = methods.filter(method => typeof app[method] === 'function');
+          log(`📋 可用方法: ${availableMethods.join(', ')}`, 'info');
+        }
+      } else {
+        log('❌ 未找到全局导出', 'error');
+      }
+    }
+    
+    function testRouteChange() {
+      log('🔄 模拟路由切换...', 'info');
+      
+      // 模拟路由变化
+      const routes = ['/ragflow/', '/ragflow/chat', '/ragflow/knowledge', '/ragflow/'];
+      let currentIndex = 0;
+      
+      const interval = setInterval(() => {
+        const route = routes[currentIndex];
+        window.history.pushState({}, '', route);
+        log(`🧭 路由切换到: ${route}`, 'info');
+        
+        // 更新请求计数
+        updateRequestCount();
+        
+        currentIndex++;
+        if (currentIndex >= routes.length) {
+          clearInterval(interval);
+          log('✅ 路由切换测试完成', 'success');
+        }
+      }, 1000);
+    }
+    
+    function updateRequestCount() {
+      let count = 0;
+      
+      if (window.ragflowActiveRequests) {
+        count = window.ragflowActiveRequests.length;
+      }
+      
+      activeRequestsSpan.textContent = count;
+      log(`📊 活跃请求数量: ${count}`, 'info');
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      log('🎉 测试页面已加载', 'success');
+      updateStatus('测试页面已准备就绪', 'success');
+      
+      // 检查是否已有全局导出
+      checkGlobalExports();
+      
+      // 定期更新请求计数
+      setInterval(updateRequestCount, 5000);
+    });
+    
+    // 监听控制台输出
+    const originalLog = console.log;
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('ragflow')) {
+        log(`🖥️ Console: ${args.join(' ')}`, 'info');
+      }
+    };
+  </script>
+</body>
+</html> 

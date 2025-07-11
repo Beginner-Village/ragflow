@@ -1,296 +1,77 @@
-const http = require('http');
-const fs = require('fs');
+const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
-const url = require('url');
+const cors = require('cors');
 
+const app = express();
 const PORT = process.env.PORT || 2080;
 const DIST_PATH = path.join(__dirname, 'dist');
 
-// MIME 类型映射
-const MIME_TYPES = {
-  '.html': 'text/html',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf',
-  '.eot': 'application/vnd.ms-fontobject',
-};
+// 0. 全局启用 CORS
+app.use(cors());
 
-// API模拟响应
-const mockApiResponses = {
-  '/v1/user/login': {
-    code: 0,
-    data: {
-      access_token: 'mock-token-123456',
-      avatar: '',
-      nickname: 'Demo User',
-      email: 'demo@ragflow.com',
+// 1. API PROXY RULES (MUST COME BEFORE STATIC SERVING)
+
+// 为生产打包测试添加代理 (带前缀的路径)
+app.use(
+  '/ynetflow/v1',
+  createProxyMiddleware({
+    target: 'http://10.10.10.225:9380',
+    changeOrigin: true,
+    // 修复规则 1:
+    pathRewrite: function (path, req) {
+      // 对于 /ynetflow/v1/user/info, path 的值是 /user/info
+      const newPath = '/v1' + path; // 重新构造为 /v1/user/info
+      console.log(
+        `[带前缀转发日志] 收到: "/ynetflow/v1${path}"  =>  构造为: "${newPath}"`,
+      );
+      return newPath;
     },
-    message: 'success',
-  },
-  '/v1/user/info': {
-    code: 0,
-    data: {
-      avatar: '',
-      nickname: 'Demo User',
-      email: 'demo@ragflow.com',
-      role: 'user',
+    logLevel: 'debug', // 保留HPM的详细日志
+    onProxyReq: function (proxyReq, req, res) {
+      // 在请求被转发前，打印出最终的路径
+      console.log(
+        `[FORWARD-LOG] 实际转发路径: ${proxyReq.method} ${proxyReq.path}`,
+      );
     },
-  },
-};
+  }),
+);
 
-function getMimeType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  return MIME_TYPES[ext] || 'text/plain';
-}
-
-function serveStaticFile(filePath, res) {
-  const fullPath = path.join(DIST_PATH, filePath);
-
-  fs.readFile(fullPath, (err, data) => {
-    if (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('文件未找到');
-      return;
-    }
-
-    const mimeType = getMimeType(fullPath);
-    res.writeHead(200, {
-      'Content-Type': mimeType,
-      'Cache-Control': 'public, max-age=31536000',
-    });
-    res.end(data);
-  });
-}
-
-function serveIndexHtml(res) {
-  const indexPath = path.join(DIST_PATH, 'index.html');
-
-  fs.readFile(indexPath, 'utf8', (err, data) => {
-    if (err) {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('服务器错误');
-      return;
-    }
-
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(data);
-  });
-}
-
-function handleApiRequest(req, res, url) {
-  // 处理CORS预检请求
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers':
-        'X-Requested-With, content-type, Authorization',
-    });
-    res.end();
-    return;
-  }
-
-  const mockResponse = mockApiResponses[url.pathname];
-  if (mockResponse) {
-    res.writeHead(200, {
-      'Access-Control-Allow-Origin': '*',
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer mock-token-123456',
-    });
-    res.end(JSON.stringify(mockResponse));
-    return;
-  }
-
-  // 默认API响应
-  res.writeHead(200, {
-    'Access-Control-Allow-Origin': '*',
-    'Content-Type': 'application/json',
-  });
-  res.end(
-    JSON.stringify({
-      code: 0,
-      data: {},
-      message: 'Mock API response',
-    }),
-  );
-}
-
-const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
-
-  // 设置 CORS 头
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-Requested-With, content-type, Authorization',
-  );
-
-  // 处理 OPTIONS 请求
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
-
-  // 健康检查
-  if (pathname === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(
-      JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }),
-    );
-    return;
-  }
-
-  // API请求处理 - 转发到后端服务器
-  if (pathname.startsWith('/v1/')) {
-    // 转发到后端API服务器
-    const backendUrl = 'http://10.10.10.225:9380';
-    const targetUrl = `${backendUrl}${req.url}`;
-
-    console.log(`🔄 转发API请求: ${req.url} -> ${targetUrl}`);
-
-    // 使用原生http模块转发请求
-    const http = require('http');
-    const https = require('https');
-    const url = require('url');
-
-    const parsedTarget = url.parse(targetUrl);
-    const requestModule = parsedTarget.protocol === 'https:' ? https : http;
-
-    const options = {
-      hostname: parsedTarget.hostname,
-      port:
-        parsedTarget.port || (parsedTarget.protocol === 'https:' ? 443 : 80),
-      path: parsedTarget.path,
-      method: req.method,
-      headers: {
-        ...req.headers,
-        host: parsedTarget.host,
-        origin: `${parsedTarget.protocol}//${parsedTarget.host}`,
-      },
-    };
-
-    const proxyReq = requestModule.request(options, (proxyRes) => {
-      // 设置CORS头
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader(
-        'Access-Control-Allow-Methods',
-        'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+// 为本地开发添加代理 (无前缀路径), 也服务于打包后的直接 /v1 请求
+app.use(
+  '/v1',
+  createProxyMiddleware({
+    target: 'http://10.10.10.225:9380',
+    changeOrigin: true,
+    // 修复规则 2:
+    pathRewrite: function (path, req) {
+      // 对于 /v1/document/image/..., path 的值是 /document/image/...
+      const newPath = '/v1' + path; // 同样需要重新构造为 /v1/document/image/...
+      console.log(
+        `[无前缀转发日志] 收到: "/v1${path}"  =>  构造为: "${newPath}"`,
       );
-      res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-Requested-With, content-type, Authorization',
-      );
+      return newPath;
+    },
+  }),
+);
 
-      // 转发响应状态码和头部
-      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+// 2. STATIC FILE SERVING
+// Serve static files from dist directory under /ynetflow path
+app.use('/ynetflow', express.static(DIST_PATH));
 
-      // 转发响应数据
-      proxyRes.pipe(res);
-    });
-
-    proxyReq.on('error', (err) => {
-      console.error('❌ API代理错误:', err.message);
-
-      // 返回模拟响应作为降级
-      res.writeHead(200, {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      });
-      res.end(
-        JSON.stringify({
-          code: 500,
-          message: `API服务暂时不可用: ${err.message}`,
-          data: null,
-        }),
-      );
-    });
-
-    // 转发请求体（对于POST/PUT请求）
-    req.pipe(proxyReq);
-    return;
-  }
-
-  // 处理静态文件
-  let filePath = pathname;
-
-  // 移除 /ragflow 前缀（微应用模式）
-  if (filePath.startsWith('/ragflow/')) {
-    filePath = filePath.substring(8);
-  }
-
-  // 如果是根路径，返回 index.html
-  if (filePath === '/' || filePath === '') {
-    serveIndexHtml(res);
-    return;
-  }
-
-  const fullPath = path.join(DIST_PATH, filePath);
-
-  fs.access(fullPath, fs.constants.F_OK, (err) => {
-    if (err) {
-      // 文件不存在，检查是否是 SPA 路由
-      // 如果路径包含文件扩展名，说明是静态资源请求，返回 404
-      // 否则是 SPA 路由，返回 index.html
-      const hasExtension = path.extname(filePath) !== '';
-      if (hasExtension) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('文件未找到: ' + filePath);
-      } else {
-        serveIndexHtml(res);
-      }
-    } else {
-      // 文件存在，直接返回
-      serveStaticFile(filePath, res);
-    }
-  });
+// 3. SPA FALLBACK
+// For any other GET request, serve index.html for client-side routing.
+// This must come after static serving.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(DIST_PATH, 'index.html'));
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`
-🚀 RAGFlow Web 服务已启动！
-
-📍 服务地址:
-  - 独立访问: http://localhost:${PORT}
-  - 微应用模式: http://localhost:${PORT}/ragflow/
-  - 健康检查: http://localhost:${PORT}/health
-
-🔧 配置信息:
-  - 端口: ${PORT}
-  - 环境: ${process.env.NODE_ENV || 'production'}
-  - 静态文件目录: ${DIST_PATH}
-
-📋 启动说明:
-  1. 独立访问: 直接在浏览器中打开 http://localhost:${PORT}
-  2. 微应用集成: 在主应用中配置 entry 为 http://localhost:${PORT}/ragflow/
-  
-⚠️  注意: 
-  - API 请求需要通过反向代理转发到后端服务
-  - 本服务仅提供静态文件服务和 SPA 路由支持
-  - 提供模拟API响应，无需后端服务
-  `);
-});
-
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(
-      `❌ 端口 ${PORT} 已被占用，请使用其他端口或停止占用该端口的进程`,
-    );
-  } else {
-    console.error('❌ 服务器启动失败:', err.message);
-  }
-  process.exit(1);
+app.listen(PORT, () => {
+  console.log(`\n✅ 服务已启动!`);
+  console.log(`- 微应用入口 (开发或打包): http://localhost:${PORT}/ynetflow`);
+  console.log(`- API 代理 (开发):   /v1 -> http://10.10.10.225:9380`);
+  console.log(`- API 代理 (打包):   /ynetflow/v1 -> http://10.10.10.225:9380`);
+  console.log(
+    `\n请运行 'npm run dev:micro' (开发) 或 'npm run serve:micro:demo' (打包测试)\n`,
+  );
 });

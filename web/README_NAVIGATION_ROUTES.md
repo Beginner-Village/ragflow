@@ -57,6 +57,71 @@
 - `src/layouts/components/right-toolbar/index.tsx` - 右侧工具栏
 - `src/layouts/components/user/index.tsx` - 用户头像组件
 
+## 设置界面路由
+
+### 用户设置 (User Setting)
+- **基础路由**: `/user-setting`
+- **默认重定向**: `/user-setting/profile`
+
+#### 子路由
+1. **个人资料**: `/user-setting/profile`
+   - 功能: 用户名、头像、主题、时区、邮箱设置
+   - 对应页面: `@/pages/user-setting/setting-profile`
+
+2. **语言设置**: `/user-setting/locale`
+   - 功能: 多语言切换
+   - 对应页面: `@/pages/user-setting/setting-locale`
+
+3. **密码设置**: `/user-setting/password`
+   - 功能: 修改密码
+   - 对应页面: `@/pages/user-setting/setting-password`
+
+4. **模型管理**: `/user-setting/model`
+   - 功能: AI模型配置和API密钥管理
+   - 对应页面: `@/pages/user-setting/setting-model`
+
+5. **团队管理**: `/user-setting/team`
+   - 功能: 团队成员和权限管理
+   - 对应页面: `@/pages/user-setting/setting-team`
+
+6. **系统设置**: `/user-setting/system`
+   - 功能: 系统状态和配置
+   - 对应页面: `@/pages/user-setting/setting-system`
+
+7. **API设置**: `/user-setting/api`
+   - 功能: API配置和管理
+   - 对应页面: `@/pages/user-setting/setting-api`
+
+### 新版设置 (Profile Setting)
+- **基础路由**: `/profile-setting`
+- **默认重定向**: `/profile-setting/profile`
+
+#### 子路由
+1. **个人资料**: `/profile-setting/profile`
+   - 功能: 用户信息、头像、密码等
+   - 对应页面: `@/pages/profile-setting/profile`
+
+2. **团队管理**: `/profile-setting/team`
+   - 功能: 团队协作设置
+   - 对应页面: `@/pages/profile-setting/team`
+
+3. **套餐计划**: `/profile-setting/plan`
+   - 功能: 订阅和计费管理
+   - 对应页面: `@/pages/profile-setting/plan`
+
+4. **模型管理**: `/profile-setting/model`
+   - 功能: AI模型配置
+   - 对应页面: `@/pages/profile-setting/model`
+
+5. **提示词管理**: `/profile-setting/prompt`
+   - 功能: 提示词模板管理
+   - 对应页面: `@/pages/profile-setting/prompt`
+
+### 数据集设置
+- **路由格式**: `/dataset/setting/:id`
+- **功能**: 数据集的配置和参数设置
+- **对应页面**: `@/pages/dataset/setting`
+
 ## 微服务嵌入建议
 
 由于导航栏已被移除，建议在父站点中：
@@ -71,6 +136,7 @@
 
 如果需要直接访问某个功能页面，可以使用以下URL：
 
+### 主要功能页面
 ```
 http://your-domain:9222/datasets     # 知识库
 http://your-domain:9222/next-chats   # 对话
@@ -78,6 +144,25 @@ http://your-domain:9222/next-searches # 搜索
 http://your-domain:9222/agents       # 工作流
 http://your-domain:9222/files        # 文件管理
 http://your-domain:9222/home         # 首页
+```
+
+### 设置界面页面
+```
+# 用户设置
+http://your-domain:9222/user-setting/profile   # 个人资料
+http://your-domain:9222/user-setting/locale    # 语言设置
+http://your-domain:9222/user-setting/password  # 密码设置
+http://your-domain:9222/user-setting/model     # 模型管理
+http://your-domain:9222/user-setting/team      # 团队管理
+http://your-domain:9222/user-setting/system    # 系统设置
+http://your-domain:9222/user-setting/api       # API设置
+
+# 新版设置
+http://your-domain:9222/profile-setting/profile # 个人资料
+http://your-domain:9222/profile-setting/team    # 团队管理
+http://your-domain:9222/profile-setting/plan    # 套餐计划
+http://your-domain:9222/profile-setting/model   # 模型管理
+http://your-domain:9222/profile-setting/prompt  # 提示词管理
 ```
 
 ## 注意事项

@@ -12,7 +12,7 @@ import { useGetDocumentUrl } from './hooks';
 
 import { useCatchDocumentError } from '@/components/pdf-previewer/hooks';
 import FileError from '@/pages/document-viewer/file-error';
-import { getPdfWorkerPath } from '@/utils/resource-path';
+import { getPdfWorkerPath } from '@/utils/path-util';
 import styles from './index.less';
 
 interface IProps {

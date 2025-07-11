@@ -1,0 +1,29 @@
+.modelSettingWrapper {
+  // .content {
+  //   width: 100%; // 占满全宽
+  //   background: #fff;
+  //   border-radius: 8px;
+  //   padding: 24px;
+  //   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  //   // 让内容自然撑开，不设置高度限制
+  // }
+}
+
+.container {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+// 暗色主题支持
+[data-theme='dark'] .modelSettingWrapper {
+  background: #141414;
+  overflow-y: auto; // 暗色主题也强制启用滚动
+
+  .content {
+    background: #1f1f1f;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    width: 100%; // 暗色主题也占满全宽
+    // 让内容自然撑开，不设置高度限制
+  }
+}

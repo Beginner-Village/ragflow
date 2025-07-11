@@ -9,22 +9,25 @@ export default defineConfig({
   outputPath: 'dist',
   alias: { '@parent': path.resolve(__dirname, '../') },
   npmClient: 'npm',
-  // 修复路径配置 - 根据微应用运行环境动态设置
-  base: process.env.MICRO_APP === 'true' ? '/ragflow/' : '/',
+  // 根据微应用运行环境动态设置路径配置
+  base: '/',
   routes,
-  // 修复publicPath配置
-  publicPath: process.env.MICRO_APP === 'true' ? '/ragflow/' : '/',
+  // 微应用模式下设置publicPath为动态路径，其他模式使用根路径
+  publicPath: process.env.MICRO_APP === 'true' ? '/ynetflow/' : '/',
   esbuildMinifyIIFE: true,
   icons: {},
   hash: true,
-  favicons: [
-    process.env.MICRO_APP === 'true' ? '/ragflow/logo.svg' : '/logo.svg',
-  ],
+  favicons: ['/logo.svg'],
+  // 决定性修复 1: 开启 Umi 的 qiankun 微应用模式
+  qiankun: {
+    slave: {},
+  },
   headScripts: [
+    // 决定性修复 2: 移除了 set-public-path.js，但保留必要的 iconfont
     {
       src:
         process.env.MICRO_APP === 'true'
-          ? '/ragflow/iconfont.js'
+          ? '/ynetflow/iconfont.js'
           : '/iconfont.js',
       defer: true,
     },
@@ -35,19 +38,7 @@ export default defineConfig({
   },
   // 暂时禁用 MFSU 来避免模块联邦错误
   mfsu: false,
-  // 仅在微应用模式下启用qiankun配置
-  ...(process.env.MICRO_APP === 'true' && {
-    qiankun: {
-      slave: {
-        devPort: 2080,
-        entry: '//localhost:2080',
-        // 指定独立的qiankun配置文件
-        runtimeChunk: false,
-      },
-    },
-  }),
-
-  runtimePublicPath: {},
+  // 移除UMI qiankun插件，使用手动UMD配置
 
   // 根据环境变量配置开发环境
   ...(process.env.NODE_ENV === 'development' && {
@@ -60,6 +51,7 @@ export default defineConfig({
       ? ['@react-dev-inspector/umi4-plugin']
       : []),
     '@umijs/plugins/dist/tailwindcss',
+    '@umijs/plugins/dist/react-query',
     // 只在微应用模式下加载qiankun插件
     ...(process.env.MICRO_APP === 'true'
       ? ['@umijs/plugins/dist/qiankun']
@@ -85,6 +77,20 @@ export default defineConfig({
         proxyRes.headers['Access-Control-Allow-Origin'] = '*';
       },
     },
+    // This rule must come first to handle prefixed paths in dev mode
+    '/ynetflow/v1': {
+      target: 'http://10.10.10.225:9380',
+      changeOrigin: true,
+      pathRewrite: { '^/ynetflow': '' },
+      onProxyRes: function (proxyRes, req, res) {
+        proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+      },
+    },
+  },
+
+  define: {
+    'process.env.MICRO_APP': process.env.MICRO_APP,
+    'process.env.REACT_APP_AUTO_LOGIN': process.env.REACT_APP_AUTO_LOGIN,
   },
 
   chainWebpack(memo: any, args: any) {

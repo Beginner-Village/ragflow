@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API前缀检测测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 RAGFlow API前缀检测测试</h1>
+    
+    <div class="info">
+        <strong>测试目的：</strong>验证在直接访问 <code>http://localhost:3000/ragflow/</code> 时，API请求是否正确添加 <code>/ragflow</code> 前缀
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 当前环境信息</h2>
+        <div id="env-info">
+            <p><strong>当前URL：</strong> <code id="current-url"></code></p>
+            <p><strong>端口：</strong> <code id="current-port"></code></p>
+            <p><strong>路径：</strong> <code id="current-path"></code></p>
+            <p><strong>Hash：</strong> <code id="current-hash"></code></p>
+            <p><strong>Qiankun环境：</strong> <code id="qiankun-env"></code></p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 路径检测测试</h2>
+        <div id="path-detection-results"></div>
+        <button onclick="testPathDetection()">🔍 检测路径逻辑</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 API请求测试</h2>
+        <div id="api-test-results"></div>
+        <button onclick="testApiRequest()">📡 测试API请求</button>
+        <button onclick="testDirectFetch()">🔗 测试直接Fetch</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 预期行为</h2>
+        <ul>
+            <li>当访问 <code>http://localhost:3000/ragflow/</code> 时，应该使用 <code>/ragflow</code> 前缀</li>
+            <li>当端口为 2080 时，应该使用 <code>/ragflow</code> 前缀</li>
+            <li>当在qiankun环境中时，应该使用 <code>/ragflow</code> 前缀</li>
+            <li>其他情况下，不使用前缀</li>
+        </ul>
+    </div>
+
+    <script>
+        // 模拟path-util.ts的逻辑
+        function isQiankunEnv() {
+            return !!(window.__POWERED_BY_QIANKUN__);
+        }
+
+        function shouldUseRagflowPrefix() {
+            // 1. 检查是否在qiankun环境中
+            if (isQiankunEnv()) {
+                return true;
+            }
+            
+            // 2. 检查URL路径是否包含/ragflow/
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/ragflow/')) {
+                return true;
+            }
+            
+            // 3. 检查是否在微应用开发端口上运行且URL包含ragflow
+            const currentPort = window.location.port;
+            const currentHash = window.location.hash;
+            if (currentPort === '2080' && (currentPath.includes('ragflow') || currentHash)) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        function getApiPrefix() {
+            if (shouldUseRagflowPrefix()) {
+                const publicPath = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
+                if (publicPath) {
+                    return publicPath.slice(0, -1);
+                }
+                return '/ragflow';
+            }
+            return '';
+        }
+
+        function getBaseUrl() {
+            if (shouldUseRagflowPrefix()) {
+                const publicPath = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
+                if (publicPath) {
+                    return publicPath.slice(0, -1);
+                }
+                return window.location.origin + '/ragflow';
+            }
+            return window.location.origin;
+        }
+
+        // 显示环境信息
+        function displayEnvInfo() {
+            document.getElementById('current-url').textContent = window.location.href;
+            document.getElementById('current-port').textContent = window.location.port || '默认端口';
+            document.getElementById('current-path').textContent = window.location.pathname;
+            document.getElementById('current-hash').textContent = window.location.hash || '无hash';
+            document.getElementById('qiankun-env').textContent = isQiankunEnv() ? '是' : '否';
+        }
+
+        // 测试路径检测逻辑
+        function testPathDetection() {
+            const resultsDiv = document.getElementById('path-detection-results');
+            
+            const shouldUsePrefix = shouldUseRagflowPrefix();
+            const apiPrefix = getApiPrefix();
+            const baseUrl = getBaseUrl();
+            
+            resultsDiv.innerHTML = `
+                <div class="${shouldUsePrefix ? 'success' : 'info'}">
+                    <strong>是否使用ragflow前缀：</strong> ${shouldUsePrefix ? '是' : '否'}
+                </div>
+                <div class="info">
+                    <strong>API前缀：</strong> <code>${apiPrefix || '无前缀'}</code>
+                </div>
+                <div class="info">
+                    <strong>基础URL：</strong> <code>${baseUrl}</code>
+                </div>
+            `;
+        }
+
+        // 测试API请求
+        function testApiRequest() {
+            const resultsDiv = document.getElementById('api-test-results');
+            resultsDiv.innerHTML = '<div class="info">正在测试API请求...</div>';
+            
+            const apiPrefix = getApiPrefix();
+            const testUrl = `${apiPrefix}/v1/user/info`;
+            
+            resultsDiv.innerHTML = `
+                <div class="info">
+                    <strong>构建的API URL：</strong> <code>${testUrl}</code>
+                </div>
+                <div class="info">
+                    模拟API请求：如果这是真实的RAGFlow应用，这个URL会被request拦截器处理
+                </div>
+            `;
+        }
+
+        // 测试直接fetch请求
+        function testDirectFetch() {
+            const resultsDiv = document.getElementById('api-test-results');
+            const baseUrl = getBaseUrl();
+            const testUrl = `${baseUrl}/v1/user/info`;
+            
+            resultsDiv.innerHTML = '<div class="info">正在测试直接fetch请求...</div>';
+            
+            fetch(testUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <strong>✅ 请求发送成功</strong><br>
+                        <strong>请求URL：</strong> <code>${testUrl}</code><br>
+                        <strong>状态码：</strong> ${response.status}<br>
+                        <strong>状态文本：</strong> ${response.statusText}
+                    </div>
+                `;
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ 请求失败</strong><br>
+                        <strong>请求URL：</strong> <code>${testUrl}</code><br>
+                        <strong>错误信息：</strong> ${error.message}<br>
+                        <strong>说明：</strong> 这是预期的，因为这是测试环境
+                    </div>
+                `;
+            });
+        }
+
+        // 页面加载时显示环境信息
+        window.addEventListener('load', function() {
+            displayEnvInfo();
+            testPathDetection();
+        });
+
+        // URL变化时更新信息
+        window.addEventListener('popstate', function() {
+            displayEnvInfo();
+            testPathDetection();
+        });
+    </script>
+</body>
+</html> 

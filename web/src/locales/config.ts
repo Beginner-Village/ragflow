@@ -64,7 +64,8 @@ i18n
     },
     supportedLngs: Object.values(LanguageAbbreviation),
     resources,
-    fallbackLng: 'en',
+    fallbackLng: 'zh', // 修改默认语言为中文
+    lng: 'zh', // 设置初始语言为中文
     interpolation: {
       escapeValue: false,
     },

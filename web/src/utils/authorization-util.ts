@@ -1,5 +1,15 @@
 import { Authorization, Token, UserInfo } from '@/constants/authorization';
 import { getSearchValue } from './common-util';
+import { getApiUrl, getBaseUrl } from './path-util';
+
+// 类型声明：qiankun微前端环境变量
+declare global {
+  interface Window {
+    __POWERED_BY_QIANKUN__?: boolean;
+    __INJECTED_PUBLIC_PATH_BY_QIANKUN__?: string;
+  }
+}
+
 const KeySet = [Authorization, Token, UserInfo];
 
 const storage = {
@@ -55,6 +65,13 @@ export const getAuthorization = () => {
   return authorization;
 };
 
+/**
+ * 获取API基础URL，自动适配当前环境
+ */
+function getApiBaseUrl(): string {
+  return getBaseUrl();
+}
+
 export async function autoLogin() {
   const ENCRYPTED_PASSWORD =
     'HEVzBzMvx6womPS/gy8BPQf3FNEOq6eMOfr2CoiQ+zi1hoEzm0TlTrffSYX37tD9QmYCdB2F8pk6Hp5BF17D8W9n54AGL8gshA98cTWajNEko6jarB5KvJsHewgHokaH2nUJbbf55MpkIBTyASK7PFR2ZLHHPG+RzHzN9lEeJkpLE8PHJe5Q+9eTs9GIA/yYRycRb9CqR2M46e0f9/n6UdYQd8fln/IAhMVvenMGHBl9A0FazyNO3dwHNVT7WDg9zVWOqe48E01FxXAaGLeWu97b6umJdx99bZwkQcpohBcTVC+Pvk2lz/IOS3rkrGA3QcPFVrKJDRe18vFFep5UyA==';
@@ -63,9 +80,12 @@ export async function autoLogin() {
   console.log('[RAGFlow] Attempting auto-login...');
 
   try {
-    // Directly use the full path. In a micro-frontend setup,
-    // relying on a proxy can be tricky. An absolute path is more reliable.
-    const response = await fetch('http://localhost:2080/v1/user/login', {
+    // 恢复标准写法，getApiUrl 现在已经因为上一个修复而变得完全可靠。
+    const loginUrl = getApiUrl('/v1/user/login');
+
+    console.log(`[RAGFlow] Auto-login URL: ${loginUrl}`);
+
+    const response = await fetch(loginUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
