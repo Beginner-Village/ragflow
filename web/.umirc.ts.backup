@@ -16,14 +16,14 @@ export default defineConfig({
   esbuildMinifyIIFE: true,
   icons: {},
   hash: true,
-  favicons: ['/favicon.ico'],
+  favicons: ['/logo.svg'],
   headScripts: [{ src: '/iconfont.js', defer: true }],
   clickToComponent: {},
   history: {
     type: 'browser',
   },
   plugins: [
-    // '@react-dev-inspector/umi4-plugin', // 开发调试工具，可在生产环境移除
+    '@react-dev-inspector/umi4-plugin',
     '@umijs/plugins/dist/tailwindcss',
   ],
   jsMinifier: 'none', // Fixed the issue that the page displayed an error after packaging lexical with terser

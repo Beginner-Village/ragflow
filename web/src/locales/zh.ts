@@ -51,7 +51,7 @@ export default {
     login: {
       login: '登录',
       signUp: '注册',
-      loginDescription: '很高兴再次见到您！',
+      loginDescription: '猎鹰知识库平台',
       registerDescription: '很高兴您加入！',
       emailLabel: '邮箱',
       emailPlaceholder: '请输入邮箱地址',
@@ -64,10 +64,9 @@ export default {
       nicknamePlaceholder: '请输入名称',
       register: '创建账户',
       continue: '继续',
-      title: '开始构建您的智能助手',
-      description:
-        '免费注册以探索顶级 RAG 技术。 创建知识库和人工智能来增强您的业务',
-      review: '来自 500 多条评论',
+      title: '猎鹰知识库平台',
+      description: '探索猎鹰知识库平台构建您的知识库',
+      review: '',
     },
     header: {
       knowledgeBase: '知识库',

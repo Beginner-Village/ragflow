@@ -52,9 +52,9 @@ const SideBar = () => {
     } as MenuItem;
   }
 
-  const items: MenuItem[] = Object.values(UserSettingRouteKey).map((value) =>
-    getItem(value, value, UserSettingIconMap[value]),
-  );
+  const items: MenuItem[] = Object.values(UserSettingRouteKey)
+    .filter((value) => value !== UserSettingRouteKey.Api) // 隐藏API菜单项
+    .map((value) => getItem(value, value, UserSettingIconMap[value]));
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === UserSettingRouteKey.Logout) {

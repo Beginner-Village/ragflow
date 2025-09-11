@@ -18,7 +18,6 @@ import { camelCase } from 'lodash';
 import {
   ChevronDown,
   CircleHelp,
-  Cpu,
   File,
   Github,
   House,
@@ -69,7 +68,7 @@ export function Header() {
       { path: Routes.Datasets, name: t('header.dataset'), icon: Library },
       { path: Routes.Chats, name: t('header.chat'), icon: MessageSquareText },
       { path: Routes.Searches, name: t('header.search'), icon: Search },
-      { path: Routes.Agents, name: t('header.flow'), icon: Cpu },
+      // { path: Routes.Agents, name: t('header.flow'), icon: Cpu }, // 隐藏智能体菜单
       { path: Routes.Files, name: t('header.fileManager'), icon: File },
     ],
     [t],
@@ -109,7 +108,7 @@ export function Header() {
     <section className="p-5 pr-14 flex justify-between items-center ">
       <div className="flex items-center gap-4">
         <img
-          src={'/logo.svg'}
+          src={'/favicon.ico'}
           alt="logo"
           className="size-10 mr-[12] cursor-pointer"
           onClick={handleLogoClick}

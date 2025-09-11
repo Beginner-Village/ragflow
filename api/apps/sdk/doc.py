@@ -1495,3 +1495,235 @@ def retrieval_test(tenant_id):
                 code=settings.RetCode.DATA_ERROR,
             )
         return server_error_response(e)
+
+
+@manager.route("/retrieval_v2", methods=["POST"])  # noqa: F821
+@token_required
+def retrieval_test_v2(tenant_id):
+    """
+    Retrieve chunks based on a query (Version 2).
+    ---
+    tags:
+      - Retrieval
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: body
+        name: body
+        description: Retrieval parameters.
+        required: true
+        schema:
+          type: object
+          properties:
+            dataset_ids:
+              type: array
+              items:
+                type: string
+              required: true
+              description: List of dataset IDs to search in.
+            question:
+              type: string
+              required: true
+              description: Query string.
+            document_ids:
+              type: array
+              items:
+                type: string
+              description: List of document IDs to filter.
+            similarity_threshold:
+              type: number
+              format: float
+              description: Similarity threshold.
+            vector_similarity_weight:
+              type: number
+              format: float
+              description: Vector similarity weight.
+            top_k:
+              type: integer
+              description: Maximum number of chunks to return.
+            highlight:
+              type: boolean
+              description: Whether to highlight matched content.
+            metadata_condition:
+              type: object
+              description: metadata filter condition.
+            include_document_url:
+              type: boolean
+              description: Whether to include document URL in response.
+            document_base_url:
+              type: string
+              description: Base URL for document access (default from config file or http://localhost:9222).
+            exclude_fields:
+              type: array
+              items:
+                type: string
+              description: Fields to exclude from response (e.g. ['image_id', 'positions', 'content_ltks']).
+      - in: header
+        name: Authorization
+        type: string
+        required: true
+        description: Bearer token for authentication.
+    responses:
+      200:
+        description: Retrieval results.
+        schema:
+          type: object
+          properties:
+            chunks:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Chunk ID.
+                  content:
+                    type: string
+                    description: Chunk content.
+                  document_id:
+                    type: string
+                    description: ID of the document.
+                  dataset_id:
+                    type: string
+                    description: ID of the dataset.
+                  similarity:
+                    type: number
+                    format: float
+                    description: Similarity score.
+                  document_url:
+                    type: string
+                    description: URL to access the original document (unless excluded via exclude_fields).
+    """
+    req = request.json
+    if not req.get("dataset_ids"):
+        return get_error_data_result("`dataset_ids` is required.")
+    kb_ids = req["dataset_ids"]
+    if not isinstance(kb_ids, list):
+        return get_error_data_result("`dataset_ids` should be a list")
+    for id in kb_ids:
+        if not KnowledgebaseService.accessible(kb_id=id, user_id=tenant_id):
+            return get_error_data_result(f"You don't own the dataset {id}.")
+    kbs = KnowledgebaseService.get_by_ids(kb_ids)
+    embd_nms = list(set([TenantLLMService.split_model_name_and_factory(kb.embd_id)[0] for kb in kbs]))  # remove vendor suffix for comparison
+    if len(embd_nms) != 1:
+        return get_result(
+            message='Datasets use different embedding models."',
+            code=settings.RetCode.DATA_ERROR,
+        )
+    if "question" not in req:
+        return get_error_data_result("`question` is required.")
+    page = int(req.get("page", 1))
+    size = int(req.get("page_size", 30))
+    question = req["question"]
+    doc_ids = req.get("document_ids", [])
+    use_kg = req.get("use_kg", False)
+    langs = req.get("cross_languages", [])
+    if not isinstance(doc_ids, list):
+        return get_error_data_result("`documents` should be a list")
+    doc_ids_list = KnowledgebaseService.list_documents_by_ids(kb_ids)
+    for doc_id in doc_ids:
+        if doc_id not in doc_ids_list:
+            return get_error_data_result(f"The datasets don't own the document {doc_id}")
+    if not doc_ids:
+        metadata_condition = req.get("metadata_condition", {})
+        metas = DocumentService.get_meta_by_kbs(kb_ids)
+        doc_ids = meta_filter(metas, convert_conditions(metadata_condition))
+    similarity_threshold = float(req.get("similarity_threshold", 0.2))
+    vector_similarity_weight = float(req.get("vector_similarity_weight", 0.3))
+    top = int(req.get("top_k", 1024))
+    if req.get("highlight") == "False" or req.get("highlight") == "false":
+        highlight = False
+    else:
+        highlight = True
+    try:
+        tenant_ids = list(set([kb.tenant_id for kb in kbs]))
+        e, kb = KnowledgebaseService.get_by_id(kb_ids[0])
+        if not e:
+            return get_error_data_result(message="Dataset not found!")
+        embd_mdl = LLMBundle(kb.tenant_id, LLMType.EMBEDDING, llm_name=kb.embd_id)
+
+        rerank_mdl = None
+        if req.get("rerank_id"):
+            rerank_mdl = LLMBundle(kb.tenant_id, LLMType.RERANK, llm_name=req["rerank_id"])
+
+        if langs:
+            question = cross_languages(kb.tenant_id, None, question, langs)
+
+        if req.get("keyword", False):
+            chat_mdl = LLMBundle(kb.tenant_id, LLMType.CHAT)
+            question += keyword_extraction(chat_mdl, question)
+
+        ranks = settings.retrievaler.retrieval(
+            question,
+            embd_mdl,
+            tenant_ids,
+            kb_ids,
+            page,
+            size,
+            similarity_threshold,
+            vector_similarity_weight,
+            top,
+            doc_ids,
+            rerank_mdl=rerank_mdl,
+            highlight=highlight,
+            rank_feature=label_question(question, kbs),
+        )
+        if use_kg:
+            ck = settings.kg_retrievaler.retrieval(question, [k.tenant_id for k in kbs], kb_ids, embd_mdl, LLMBundle(kb.tenant_id, LLMType.CHAT))
+            if ck["content_with_weight"]:
+                ranks["chunks"].insert(0, ck)
+
+        for c in ranks["chunks"]:
+            c.pop("vector", None)
+
+        ##rename keys and add document URL
+        renamed_chunks = []
+        for chunk in ranks["chunks"]:
+            key_mapping = {
+                "chunk_id": "id",
+                "content_with_weight": "content",
+                "doc_id": "document_id",
+                "important_kwd": "important_keywords",
+                "question_kwd": "questions",
+                "docnm_kwd": "document_keyword",
+                "kb_id": "dataset_id",
+            }
+            rename_chunk = {}
+            for key, value in chunk.items():
+                new_key = key_mapping.get(key, key)
+                rename_chunk[new_key] = value
+            
+            # Add document URL (default enabled, like content)
+            document_id = chunk.get("doc_id", "")
+            document_name = chunk.get("docnm_kwd", "")
+            
+            # Extract file extension from document name
+            import os
+            file_ext = ""
+            if document_name:
+                _, ext = os.path.splitext(document_name)
+                file_ext = ext.lstrip('.')  # Remove the dot
+            
+            # Construct document URL (always add like other core fields)
+            if document_id and file_ext:
+                # Get base URL from request or use configured default
+                base_url = req.get("document_base_url", settings.DOCUMENT_BASE_URL)
+                document_url = f"{base_url}/document/{document_id}?ext={file_ext}&prefix=document"
+                rename_chunk["document_url"] = document_url
+            
+            # Apply field exclusion filter
+            exclude_fields = req.get("exclude_fields", [])
+            if exclude_fields:
+                for field in exclude_fields:
+                    rename_chunk.pop(field, None)
+            
+            renamed_chunks.append(rename_chunk)
+        ranks["chunks"] = renamed_chunks
+        return get_result(data=ranks)
+    except Exception as e:
+        if str(e).find("not_found") > 0:
+            return get_result(
+                message="No chunk found! Check the chunk status please!",
+                code=settings.RetCode.DATA_ERROR,
+            )
+        return server_error_response(e)

@@ -1,8 +1,6 @@
 ragflow:
   host: 0.0.0.0
   http_port: 9380
-  secret_key: 'ynetflow-stable-secret-key-12345678901234567890123456789012'
-  document_base_url: 'http://localhost:9222'
 mysql:
   name: 'rag_flow'
   user: 'root'

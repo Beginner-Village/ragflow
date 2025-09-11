@@ -373,9 +373,24 @@ def get_error_operating_result(message="Operating error"):
     return get_result(code=settings.RetCode.OPERATING_ERROR, message=message)
 
 
-def generate_confirmation_token(tenant_id):
+def generate_confirmation_token(tenant_id, token_type="system"):
+    """
+    Generate API token with different prefixes based on token type
+    
+    Args:
+        tenant_id: The tenant identifier
+        token_type: Type of token - "system", "kb" (knowledge base), etc.
+    
+    Returns:
+        Token string with appropriate prefix
+    """
     serializer = URLSafeTimedSerializer(tenant_id)
-    return "ragflow-" + serializer.dumps(get_uuid(), salt=tenant_id)[2:34]
+    token_body = serializer.dumps(get_uuid(), salt=tenant_id)[2:34]
+    
+    if token_type == "kb":
+        return "yf-kb-" + token_body
+    else:
+        return "yf-sys-" + token_body
 
 
 def get_parser_config(chunk_method, parser_config):

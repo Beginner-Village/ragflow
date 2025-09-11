@@ -48,6 +48,7 @@ PARSERS = None
 HOST_IP = None
 HOST_PORT = None
 SECRET_KEY = None
+DOCUMENT_BASE_URL = None
 FACTORY_LLM_INFOS = None
 
 DATABASE_TYPE = os.getenv("DB_TYPE", "mysql")
@@ -133,7 +134,7 @@ def init_settings():
     if not LIGHTEN:
         EMBEDDING_MDL = BUILTIN_EMBEDDING_MODELS[0]
 
-    global API_KEY, PARSERS, HOST_IP, HOST_PORT, SECRET_KEY
+    global API_KEY, PARSERS, HOST_IP, HOST_PORT, SECRET_KEY, DOCUMENT_BASE_URL
     API_KEY = LLM.get("api_key")
     PARSERS = LLM.get(
         "parsers", "naive:General,qa:Q&A,resume:Resume,manual:Manual,table:Table,paper:Paper,book:Book,laws:Laws,presentation:Presentation,picture:Picture,one:One,audio:Audio,email:Email,tag:Tag"
@@ -159,6 +160,7 @@ def init_settings():
 
     HOST_IP = get_base_config(RAG_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
     HOST_PORT = get_base_config(RAG_FLOW_SERVICE_NAME, {}).get("http_port")
+    DOCUMENT_BASE_URL = get_base_config(RAG_FLOW_SERVICE_NAME, {}).get("document_base_url", "http://localhost:9222")
 
     SECRET_KEY = get_or_create_secret_key()
 
