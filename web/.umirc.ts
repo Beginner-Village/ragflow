@@ -6,7 +6,7 @@ import routes from './src/routes';
 const ESLintPlugin = require('eslint-webpack-plugin');
 
 export default defineConfig({
-  title: appName,
+  title: '猎鹰知识库平台',
   outputPath: 'dist',
   alias: { '@parent': path.resolve(__dirname, '../') },
   npmClient: 'npm',
