@@ -36,7 +36,7 @@
 </p>
 
 <h4 align="center">
-  <a href="https://ragflow.io/docs/dev/">Documentação</a> |
+  <a href="https://ynetflow.io/docs/dev/">Documentação</a> |
   <a href="https://github.com/infiniflow/ragflow/issues/4214">Roadmap</a> |
   <a href="https://twitter.com/infiniflowai">Twitter</a> |
   <a href="https://discord.gg/NjYzJD3GM3">Discord</a> |
@@ -178,7 +178,7 @@ Experimente nossa demo em [https://demo.ragflow.io](https://demo.ragflow.io).
 
 > [!CAUTION]
 > Todas as imagens Docker são construídas para plataformas x86. Atualmente, não oferecemos imagens Docker para ARM64.
-> Se você estiver usando uma plataforma ARM64, por favor, utilize [este guia](https://ragflow.io/docs/dev/build_docker_image) para construir uma imagem Docker compatível com o seu sistema.
+> Se você estiver usando uma plataforma ARM64, por favor, utilize [este guia](https://ynetflow.io/docs/dev/build_docker_image) para construir uma imagem Docker compatível com o seu sistema.
 
     > O comando abaixo baixa a edição `v0.20.4-slim` da imagem Docker do RAGFlow. Consulte a tabela a seguir para descrições de diferentes edições do RAGFlow. Para baixar uma edição do RAGFlow diferente da `v0.20.4-slim`, atualize a variável `RAGFLOW_IMAGE` conforme necessário no **docker/.env** antes de usar `docker compose` para iniciar o servidor. Por exemplo: defina `RAGFLOW_IMAGE=infiniflow/ragflow:v0.20.4` para a edição completa `v0.20.4`.
 
@@ -224,7 +224,7 @@ Experimente nossa demo em [https://demo.ragflow.io](https://demo.ragflow.io).
 
 6.  Em [service_conf.yaml.template](./docker/service_conf.yaml.template), selecione a fábrica LLM desejada em `user_default_llm` e atualize o campo `API_KEY` com a chave de API correspondente.
 
-    > Consulte [llm_api_key_setup](https://ragflow.io/docs/dev/llm_api_key_setup) para mais informações.
+    > Consulte [llm_api_key_setup](https://ynetflow.io/docs/dev/llm_api_key_setup) para mais informações.
 
 _O show está no ar!_
 
@@ -368,13 +368,13 @@ docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly 
 
 ## 📚 Documentação
 
-- [Quickstart](https://ragflow.io/docs/dev/)
-- [Configuration](https://ragflow.io/docs/dev/configurations)
-- [Release notes](https://ragflow.io/docs/dev/release_notes)
-- [User guides](https://ragflow.io/docs/dev/category/guides)
-- [Developer guides](https://ragflow.io/docs/dev/category/developers)
-- [References](https://ragflow.io/docs/dev/category/references)
-- [FAQs](https://ragflow.io/docs/dev/faq)
+- [Quickstart](https://ynetflow.io/docs/dev/)
+- [Configuration](https://ynetflow.io/docs/dev/configurations)
+- [Release notes](https://ynetflow.io/docs/dev/release_notes)
+- [User guides](https://ynetflow.io/docs/dev/category/guides)
+- [Developer guides](https://ynetflow.io/docs/dev/category/developers)
+- [References](https://ynetflow.io/docs/dev/category/references)
+- [FAQs](https://ynetflow.io/docs/dev/faq)
 
 ## 📜 Roadmap
 
@@ -389,4 +389,4 @@ Veja o [RAGFlow Roadmap 2025](https://github.com/infiniflow/ragflow/issues/4214)
 ## 🙌 Contribuindo
 
 O RAGFlow prospera por meio da colaboração de código aberto. Com esse espírito, abraçamos contribuições diversas da comunidade.
-Se você deseja fazer parte, primeiro revise nossas [Diretrizes de Contribuição](https://ragflow.io/docs/dev/contributing).
+Se você deseja fazer parte, primeiro revise nossas [Diretrizes de Contribuição](https://ynetflow.io/docs/dev/contributing).

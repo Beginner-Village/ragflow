@@ -5,7 +5,7 @@ slug: /http_api_reference
 
 # HTTP API
 
-A complete reference for RAGFlow's RESTful API. Before proceeding, please ensure you [have your RAGFlow API key ready for authentication](https://ragflow.io/docs/dev/acquire_ragflow_api_key).
+A complete reference for RAGFlow's RESTful API. Before proceeding, please ensure you [have your RAGFlow API key ready for authentication](https://ynetflow.io/docs/dev/acquire_ragflow_api_key).
 
 ---
 
@@ -495,7 +495,7 @@ curl --request POST \
       - Defaults to `false`
     - `"layout_recognize"`: `string`
       - Defaults to `DeepDOC`
-    - `"tag_kb_ids"`: `array<string>` refer to [Use tag set](https://ragflow.io/docs/dev/use_tag_sets)
+    - `"tag_kb_ids"`: `array<string>` refer to [Use tag set](https://ynetflow.io/docs/dev/use_tag_sets)
       - Must include a list of dataset IDs, where each dataset is parsed using the ​​Tag Chunking Method
     - `"task_page_size"`: `int` For PDF only.
       - Defaults to `12`
@@ -677,7 +677,7 @@ curl --request PUT \
   - `"me"`: (Default) Only you can manage the dataset.
   - `"team"`: All team members can manage the dataset.
 - `"pagerank"`: (*Body parameter*), `int`  
-  refer to [Set page rank](https://ragflow.io/docs/dev/set_page_rank)
+  refer to [Set page rank](https://ynetflow.io/docs/dev/set_page_rank)
   - Default: `0`
   - Minimum: `0`
   - Maximum: `100`
@@ -716,7 +716,7 @@ curl --request PUT \
       - Defaults to `false`
     - `"layout_recognize"`: `string`
       - Defaults to `DeepDOC`
-    - `"tag_kb_ids"`: `array<string>` refer to [Use tag set](https://ragflow.io/docs/dev/use_tag_sets)
+    - `"tag_kb_ids"`: `array<string>` refer to [Use tag set](https://ynetflow.io/docs/dev/use_tag_sets)
       - Must include a list of dataset IDs, where each dataset is parsed using the ​​Tag Chunking Method
     - `"task_page_size"`: `int` For PDF only.
       - Defaults to `12`

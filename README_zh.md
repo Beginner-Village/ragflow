@@ -36,7 +36,7 @@
 </p>
 
 <h4 align="center">
-  <a href="https://ragflow.io/docs/dev/">Document</a> |
+  <a href="https://ynetflow.io/docs/dev/">Document</a> |
   <a href="https://github.com/infiniflow/ragflow/issues/4214">Roadmap</a> |
   <a href="https://twitter.com/infiniflowai">Twitter</a> |
   <a href="https://discord.gg/NjYzJD3GM3">Discord</a> |
@@ -181,7 +181,7 @@
 
 > [!CAUTION]
 > 请注意，目前官方提供的所有 Docker 镜像均基于 x86 架构构建，并不提供基于 ARM64 的 Docker 镜像。
-> 如果你的操作系统是 ARM64 架构，请参考[这篇文档](https://ragflow.io/docs/dev/build_docker_image)自行构建 Docker 镜像。
+> 如果你的操作系统是 ARM64 架构，请参考[这篇文档](https://ynetflow.io/docs/dev/build_docker_image)自行构建 Docker 镜像。
 
    > 运行以下命令会自动下载 RAGFlow slim Docker 镜像 `v0.20.4-slim`。请参考下表查看不同 Docker 发行版的描述。如需下载不同于 `v0.20.4-slim` 的 Docker 镜像，请在运行 `docker compose` 启动服务之前先更新 **docker/.env** 文件内的 `RAGFLOW_IMAGE` 变量。比如，你可以通过设置 `RAGFLOW_IMAGE=infiniflow/ragflow:v0.20.4` 来下载 RAGFlow 镜像的 `v0.20.4` 完整发行版。
 
@@ -231,7 +231,7 @@
    > 上面这个例子中，您只需输入 http://IP_OF_YOUR_MACHINE 即可：未改动过配置则无需输入端口（默认的 HTTP 服务端口 80）。
 6. 在 [service_conf.yaml.template](./docker/service_conf.yaml.template) 文件的 `user_default_llm` 栏配置 LLM factory，并在 `API_KEY` 栏填写和你选择的大模型相对应的 API key。
 
-   > 详见 [llm_api_key_setup](https://ragflow.io/docs/dev/llm_api_key_setup)。
+   > 详见 [llm_api_key_setup](https://ynetflow.io/docs/dev/llm_api_key_setup)。
 
    _好戏开始，接着奏乐接着舞！_
 
@@ -380,13 +380,13 @@ docker build --platform linux/amd64 --build-arg NEED_MIRROR=1 -f Dockerfile -t i
 
 ## 📚 技术文档
 
-- [Quickstart](https://ragflow.io/docs/dev/)
-- [Configuration](https://ragflow.io/docs/dev/configurations)
-- [Release notes](https://ragflow.io/docs/dev/release_notes)
-- [User guides](https://ragflow.io/docs/dev/category/guides)
-- [Developer guides](https://ragflow.io/docs/dev/category/developers)
-- [References](https://ragflow.io/docs/dev/category/references)
-- [FAQs](https://ragflow.io/docs/dev/faq)
+- [Quickstart](https://ynetflow.io/docs/dev/)
+- [Configuration](https://ynetflow.io/docs/dev/configurations)
+- [Release notes](https://ynetflow.io/docs/dev/release_notes)
+- [User guides](https://ynetflow.io/docs/dev/category/guides)
+- [Developer guides](https://ynetflow.io/docs/dev/category/developers)
+- [References](https://ynetflow.io/docs/dev/category/references)
+- [FAQs](https://ynetflow.io/docs/dev/faq)
 
 ## 📜 路线图
 
@@ -400,7 +400,7 @@ docker build --platform linux/amd64 --build-arg NEED_MIRROR=1 -f Dockerfile -t i
 
 ## 🙌 贡献指南
 
-RAGFlow 只有通过开源协作才能蓬勃发展。秉持这一精神,我们欢迎来自社区的各种贡献。如果您有意参与其中,请查阅我们的 [贡献者指南](https://ragflow.io/docs/dev/contributing) 。
+RAGFlow 只有通过开源协作才能蓬勃发展。秉持这一精神,我们欢迎来自社区的各种贡献。如果您有意参与其中,请查阅我们的 [贡献者指南](https://ynetflow.io/docs/dev/contributing) 。
 
 ## 🤝 商务合作
 

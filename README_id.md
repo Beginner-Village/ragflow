@@ -36,7 +36,7 @@
 </p>
 
 <h4 align="center">
-  <a href="https://ragflow.io/docs/dev/">Dokumentasi</a> |
+  <a href="https://ynetflow.io/docs/dev/">Dokumentasi</a> |
   <a href="https://github.com/infiniflow/ragflow/issues/4214">Peta Jalan</a> |
   <a href="https://twitter.com/infiniflowai">Twitter</a> |
   <a href="https://discord.gg/NjYzJD3GM3">Discord</a> |
@@ -179,7 +179,7 @@ Coba demo kami di [https://demo.ragflow.io](https://demo.ragflow.io).
 
 > [!CAUTION]
 > Semua gambar Docker dibangun untuk platform x86. Saat ini, kami tidak menawarkan gambar Docker untuk ARM64.
-> Jika Anda menggunakan platform ARM64, [silakan gunakan panduan ini untuk membangun gambar Docker yang kompatibel dengan sistem Anda](https://ragflow.io/docs/dev/build_docker_image).
+> Jika Anda menggunakan platform ARM64, [silakan gunakan panduan ini untuk membangun gambar Docker yang kompatibel dengan sistem Anda](https://ynetflow.io/docs/dev/build_docker_image).
 
 > Perintah di bawah ini mengunduh edisi v0.20.4-slim dari gambar Docker RAGFlow. Silakan merujuk ke tabel berikut untuk deskripsi berbagai edisi RAGFlow. Untuk mengunduh edisi RAGFlow yang berbeda dari v0.20.4-slim, perbarui variabel RAGFLOW_IMAGE di docker/.env sebelum menggunakan docker compose untuk memulai server. Misalnya, atur RAGFLOW_IMAGE=infiniflow/ragflow:v0.20.4 untuk edisi lengkap v0.20.4.
 
@@ -227,7 +227,7 @@ $ docker compose -f docker-compose.yml up -d
 3. Dalam [service_conf.yaml.template](./docker/service_conf.yaml.template), pilih LLM factory yang diinginkan di `user_default_llm` dan perbarui
    bidang `API_KEY` dengan kunci API yang sesuai.
 
-   > Lihat [llm_api_key_setup](https://ragflow.io/docs/dev/llm_api_key_setup) untuk informasi lebih lanjut.
+   > Lihat [llm_api_key_setup](https://ynetflow.io/docs/dev/llm_api_key_setup) untuk informasi lebih lanjut.
 
    _Sistem telah siap digunakan!_
 
@@ -351,13 +351,13 @@ docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly 
 
 ## 📚 Dokumentasi
 
-- [Quickstart](https://ragflow.io/docs/dev/)
-- [Configuration](https://ragflow.io/docs/dev/configurations)
-- [Release notes](https://ragflow.io/docs/dev/release_notes)
-- [User guides](https://ragflow.io/docs/dev/category/guides)
-- [Developer guides](https://ragflow.io/docs/dev/category/developers)
-- [References](https://ragflow.io/docs/dev/category/references)
-- [FAQs](https://ragflow.io/docs/dev/faq)
+- [Quickstart](https://ynetflow.io/docs/dev/)
+- [Configuration](https://ynetflow.io/docs/dev/configurations)
+- [Release notes](https://ynetflow.io/docs/dev/release_notes)
+- [User guides](https://ynetflow.io/docs/dev/category/guides)
+- [Developer guides](https://ynetflow.io/docs/dev/category/developers)
+- [References](https://ynetflow.io/docs/dev/category/references)
+- [FAQs](https://ynetflow.io/docs/dev/faq)
 
 ## 📜 Roadmap
 
@@ -372,4 +372,4 @@ Lihat [Roadmap RAGFlow 2025](https://github.com/infiniflow/ragflow/issues/4214)
 ## 🙌 Kontribusi
 
 RAGFlow berkembang melalui kolaborasi open-source. Dalam semangat ini, kami menerima kontribusi dari komunitas.
-Jika Anda ingin berpartisipasi, tinjau terlebih dahulu [Panduan Kontribusi](https://ragflow.io/docs/dev/contributing).
+Jika Anda ingin berpartisipasi, tinjau terlebih dahulu [Panduan Kontribusi](https://ynetflow.io/docs/dev/contributing).

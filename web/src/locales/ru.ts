@@ -115,7 +115,7 @@ export default {
       action: 'Действие',
       parsingStatus: 'Статус обработки',
       parsingStatusTip:
-        'Время обработки документа зависит от нескольких факторов. Включение таких функций, как Граф знаний, RAPTOR, Автоизвлечение вопросов или Автоизвлечение ключевых слов, значительно увеличит время обработки. Если индикатор выполнения завис, обратитесь к FAQ: https://ragflow.io/docs/dev/faq#why-does-my-document-parsing-stall-at-under-one-percent.',
+        'Время обработки документа зависит от нескольких факторов. Включение таких функций, как Граф знаний, RAPTOR, Автоизвлечение вопросов или Автоизвлечение ключевых слов, значительно увеличит время обработки. Если индикатор выполнения завис, обратитесь к FAQ: https://ynetflow.io/docs/dev/faq#why-does-my-document-parsing-stall-at-under-one-percent.',
       processBeginAt: 'Начато в',
       processDuration: 'Длительность',
       progressMsg: 'Прогресс',

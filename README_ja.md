@@ -36,7 +36,7 @@
 </p>
 
 <h4 align="center">
-  <a href="https://ragflow.io/docs/dev/">Document</a> |
+  <a href="https://ynetflow.io/docs/dev/">Document</a> |
   <a href="https://github.com/infiniflow/ragflow/issues/4214">Roadmap</a> |
   <a href="https://twitter.com/infiniflowai">Twitter</a> |
   <a href="https://discord.gg/NjYzJD3GM3">Discord</a> |
@@ -158,7 +158,7 @@
 
 > [!CAUTION]
 > 現在、公式に提供されているすべての Docker イメージは x86 アーキテクチャ向けにビルドされており、ARM64 用の Docker イメージは提供されていません。
-> ARM64 アーキテクチャのオペレーティングシステムを使用している場合は、[このドキュメント](https://ragflow.io/docs/dev/build_docker_image)を参照して Docker イメージを自分でビルドしてください。
+> ARM64 アーキテクチャのオペレーティングシステムを使用している場合は、[このドキュメント](https://ynetflow.io/docs/dev/build_docker_image)を参照して Docker イメージを自分でビルドしてください。
 
    > 以下のコマンドは、RAGFlow Docker イメージの v0.20.4-slim エディションをダウンロードします。異なる RAGFlow エディションの説明については、以下の表を参照してください。v0.20.4-slim とは異なるエディションをダウンロードするには、docker/.env ファイルの RAGFLOW_IMAGE 変数を適宜更新し、docker compose を使用してサーバーを起動してください。例えば、完全版 v0.20.4 をダウンロードするには、RAGFLOW_IMAGE=infiniflow/ragflow:v0.20.4 と設定します。
 
@@ -202,7 +202,7 @@
    > デフォルトの設定を使用する場合、デフォルトの HTTP サービングポート `80` は省略できるので、与えられたシナリオでは、`http://IP_OF_YOUR_MACHINE`（ポート番号は省略）だけを入力すればよい。
 3. [service_conf.yaml.template](./docker/service_conf.yaml.template) で、`user_default_llm` で希望の LLM ファクトリを選択し、`API_KEY` フィールドを対応する API キーで更新する。
 
-   > 詳しくは [llm_api_key_setup](https://ragflow.io/docs/dev/llm_api_key_setup) を参照してください。
+   > 詳しくは [llm_api_key_setup](https://ynetflow.io/docs/dev/llm_api_key_setup) を参照してください。
 
    _これで初期設定完了！ショーの開幕です！_
 
@@ -345,13 +345,13 @@ docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly 
 
 ## 📚 ドキュメンテーション
 
-- [Quickstart](https://ragflow.io/docs/dev/)
-- [Configuration](https://ragflow.io/docs/dev/configurations)
-- [Release notes](https://ragflow.io/docs/dev/release_notes)
-- [User guides](https://ragflow.io/docs/dev/category/guides)
-- [Developer guides](https://ragflow.io/docs/dev/category/developers)
-- [References](https://ragflow.io/docs/dev/category/references)
-- [FAQs](https://ragflow.io/docs/dev/faq)
+- [Quickstart](https://ynetflow.io/docs/dev/)
+- [Configuration](https://ynetflow.io/docs/dev/configurations)
+- [Release notes](https://ynetflow.io/docs/dev/release_notes)
+- [User guides](https://ynetflow.io/docs/dev/category/guides)
+- [Developer guides](https://ynetflow.io/docs/dev/category/developers)
+- [References](https://ynetflow.io/docs/dev/category/references)
+- [FAQs](https://ynetflow.io/docs/dev/faq)
 
 ## 📜 ロードマップ
 
@@ -365,4 +365,4 @@ docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly 
 
 ## 🙌 コントリビュート
 
-RAGFlow はオープンソースのコラボレーションによって発展してきました。この精神に基づき、私たちはコミュニティからの多様なコントリビュートを受け入れています。 参加を希望される方は、まず [コントリビューションガイド](https://ragflow.io/docs/dev/contributing)をご覧ください。
+RAGFlow はオープンソースのコラボレーションによって発展してきました。この精神に基づき、私たちはコミュニティからの多様なコントリビュートを受け入れています。 参加を希望される方は、まず [コントリビューションガイド](https://ynetflow.io/docs/dev/contributing)をご覧ください。

@@ -19,7 +19,7 @@ API Token Migration Script
 
 This script handles the migration of API tokens to support the new authentication system:
 1. Add token_type field to existing APIToken table
-2. Mark existing ynetflow- tokens as 'system' type
+2. Mark existing YnetRAG- tokens as 'system' type
 3. Create KnowledgebaseAPIToken table
 4. Ensure backward compatibility
 

@@ -89,7 +89,7 @@ export default function SearchingView({
             setIsSearching?.(false);
           }}
         >
-          RAGFlow
+          猎鹰知识库
         </h1>
 
         <div

@@ -62,7 +62,7 @@ ragflow:
   # Optional service configuration overrides
   # to be written to local.service_conf.yaml
   # inside the RAGFlow container
-  # https://ragflow.io/docs/dev/configurations#service-configuration
+  # https://ynetflow.io/docs/dev/configurations#service-configuration
   service_conf:
 
   # Optional yaml formatted override for the
