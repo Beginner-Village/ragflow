@@ -1,3 +1,14 @@
+import logoIcon from '@/assets/logo.png';
+import chatIcon from '@/assets/menu/chat.png';
+import chatIconActive from '@/assets/menu/chat_h.png';
+import datasetIcon from '@/assets/menu/dataset.png';
+import datasetIconActive from '@/assets/menu/dataset_h.png';
+import fileIcon from '@/assets/menu/file.png';
+import fileIconActive from '@/assets/menu/file_h.png';
+import homeIcon from '@/assets/menu/house.png';
+import homeIconActive from '@/assets/menu/house_h.png';
+import searchIcon from '@/assets/menu/search.png';
+import searchIconActive from '@/assets/menu/search_h.png';
 import { RAGFlowAvatar } from '@/components/ragflow-avatar';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -7,24 +18,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Segmented, SegmentedValue } from '@/components/ui/segmented';
+import { SegmentedValue } from '@/components/ui/segmented';
 import { LanguageList, LanguageMap, ThemeEnum } from '@/constants/common';
 import { useChangeLanguage } from '@/hooks/logic-hooks';
 import { useNavigatePage } from '@/hooks/logic-hooks/navigate-hooks';
 import { useNavigateWithFromState } from '@/hooks/route-hook';
 import { useFetchUserInfo } from '@/hooks/user-setting-hooks';
 import { Routes } from '@/routes';
+import cls from 'classnames';
 import { camelCase } from 'lodash';
-import {
-  ChevronDown,
-  File,
-  House,
-  Library,
-  MessageSquareText,
-  Moon,
-  Search,
-  Sun,
-} from 'lucide-react';
+import { ChevronDown, Moon, Sun } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'umi';
@@ -58,31 +61,55 @@ export function Header() {
 
   const tagsData = useMemo(
     () => [
-      { path: Routes.Root, name: t('header.Root'), icon: House },
-      { path: Routes.Datasets, name: t('header.dataset'), icon: Library },
-      { path: Routes.Chats, name: t('header.chat'), icon: MessageSquareText },
-      { path: Routes.Searches, name: t('header.search'), icon: Search },
-      // { path: Routes.Agents, name: t('header.flow'), icon: Cpu }, // 隐藏智能体菜单
-      { path: Routes.Files, name: t('header.fileManager'), icon: File },
+      {
+        path: Routes.Root,
+        name: t('header.home'),
+        icon: homeIcon,
+        activeIcon: homeIconActive,
+      },
+      {
+        path: Routes.Datasets,
+        name: t('header.dataset'),
+        icon: datasetIcon,
+        activeIcon: datasetIconActive,
+      },
+      {
+        path: Routes.Chats,
+        name: t('header.chat'),
+        icon: chatIcon,
+        activeIcon: chatIconActive,
+      },
+      {
+        path: Routes.Searches,
+        name: t('header.search'),
+        icon: searchIcon,
+        activeIcon: searchIconActive,
+      },
+      {
+        path: Routes.Files,
+        name: t('header.fileManager'),
+        icon: fileIcon,
+        activeIcon: fileIconActive,
+      },
     ],
     [t],
   );
 
-  const options = useMemo(() => {
-    return tagsData.map((tag) => {
-      const HeaderIcon = tag.icon;
+  // const options = useMemo(() => {
+  //   return tagsData.map((tag) => {
+  //     const HeaderIcon = tag.icon;
 
-      return {
-        label:
-          tag.path === Routes.Root ? (
-            <HeaderIcon className="size-6"></HeaderIcon>
-          ) : (
-            <span>{tag.name}</span>
-          ),
-        value: tag.path,
-      };
-    });
-  }, [tagsData]);
+  //     return {
+  //       label:
+  //         tag.path === Routes.Root ? (
+  //           <HeaderIcon className="size-6"></HeaderIcon>
+  //         ) : (
+  //           <span>{tag.name}</span>
+  //         ),
+  //       value: tag.path,
+  //     };
+  //   });
+  // }, [tagsData]);
 
   // const currentPath = useMemo(() => {
   //   return (
@@ -99,36 +126,60 @@ export function Header() {
   }, [navigate]);
 
   return (
-    <section className="p-5 pr-14 flex justify-between items-center ">
+    <section className="w-[80px] h-full fixed inset-y-0 left-0 py-[20px] flex justify-between items-center flex-col bg-white border-r border-[1px] border-[#E9EBF2]">
       <div className="flex items-center gap-4">
         <img
-          src={'/favicon.ico'}
+          src={logoIcon}
           alt="logo"
-          className="size-10 mr-[12] cursor-pointer"
+          className="size-10 cursor-pointer"
           onClick={handleLogoClick}
         />
       </div>
-      <Segmented
+      {/* <Segmented
         options={options}
         value={pathname}
         onChange={handleChange}
-      ></Segmented>
-      <div className="flex items-center gap-5 text-text-badge">
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <div className="flex items-center gap-1">
-              {t(`common.${camelCase(language)}`)}
-              <ChevronDown className="size-4" />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {items.map((x) => (
-              <DropdownMenuItem key={x.key} onClick={handleItemClick(x.key)}>
-                {x.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+      ></Segmented> */}
+      <div className="flex-1 py-[24px] flex flex-col gap-[14px]">
+        {tagsData.map((x) => (
+          <div
+            key={x.path}
+            className={cls(
+              'w-[64px] flex flex-col items-center gap-[4px] cursor-pointer py-[6px] rounded-[8px]',
+              {
+                'text-[#358AFF]': pathname === x.path,
+                'bg-[#F0F5FF]': pathname === x.path,
+              },
+            )}
+            onClick={() => handleChange(x.path)}
+          >
+            <img
+              src={pathname === x.path ? x.activeIcon : x.icon}
+              alt={x.name}
+              className="size-6"
+            />
+            <span className="text-[12px] mt-[4px]">{x.name}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-5 flex-col text-text-badge">
+        <div className="fixed top-[20px] right-[20px] bg-white">
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <div className="flex items-center gap-1">
+                {t(`common.${camelCase(language)}`)}
+                <ChevronDown className="size-4" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {items.map((x) => (
+                <DropdownMenuItem key={x.key} onClick={handleItemClick(x.key)}>
+                  {x.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <Button variant={'ghost'} onClick={onThemeClick}>
           {theme === 'light' ? <Sun /> : <Moon />}
         </Button>

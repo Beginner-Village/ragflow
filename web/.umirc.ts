@@ -35,12 +35,12 @@ export default defineConfig({
   devtool: 'source-map',
   copy: [
     { from: 'src/conf.json', to: 'dist/conf.json' },
-    { from: 'node_modules/monaco-editor/min/vs/', to: 'dist/vs/' },
+    // { from: 'node_modules/monaco-editor/min/vs/', to: 'dist/vs/' },
   ],
   proxy: [
     {
       context: ['/api', '/v1'],
-      target: 'http://127.0.0.1:9380/',
+      target: 'https://ynetflow-agent.finmall.com',
       changeOrigin: true,
       ws: true,
       logger: console,
