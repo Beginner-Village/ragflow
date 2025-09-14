@@ -42,8 +42,12 @@ export default function ChatList() {
           icon="chat"
           onSearchChange={handleInputChange}
           searchString={searchString}
+          className="pr-32"
         >
-          <Button onClick={handleShowCreateModal}>
+          <Button
+            onClick={handleShowCreateModal}
+            className="bg-gradient-to-r from-[#42D7E7] to-[#478AF5] text-white border-0"
+          >
             <Plus className="size-2.5" />
             {t('chat.createChat')}
           </Button>

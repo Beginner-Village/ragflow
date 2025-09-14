@@ -53,7 +53,10 @@ const SideBar = () => {
   }
 
   const items: MenuItem[] = Object.values(UserSettingRouteKey)
-    .filter((value) => value !== UserSettingRouteKey.Api) // 隐藏API菜单项
+    .filter(
+      (value) =>
+        value !== UserSettingRouteKey.Api && value !== UserSettingRouteKey.MCP,
+    ) // 隐藏API与MCP菜单项
     .map((value) => getItem(value, value, UserSettingIconMap[value]));
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {

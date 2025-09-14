@@ -94,10 +94,11 @@ export default function Files() {
         onSearchChange={handleInputChange}
         showFilter={false}
         icon={'file'}
+        className="pr-32"
       >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button>
+            <Button className="bg-gradient-to-r from-[#42D7E7] to-[#478AF5] text-white border-0">
               <Upload />
               {t('knowledgeDetails.addFile')}
             </Button>

@@ -53,7 +53,7 @@ export default function Datasets() {
   );
 
   return (
-    <section className="py-4 flex-1 flex flex-col">
+    <section className="px-8 pt-8 flex-1 flex flex-col">
       <ListFilterBar
         title={t('header.dataset')}
         searchString={searchString}
@@ -61,10 +61,13 @@ export default function Datasets() {
         value={filterValue}
         filters={owners}
         onChange={handleFilterSubmit}
-        className="px-8"
+        className="pr-32"
         icon={'data'}
       >
-        <Button onClick={showModal}>
+        <Button
+          onClick={showModal}
+          className="bg-gradient-to-r from-[#42D7E7] to-[#478AF5] text-white border-0"
+        >
           <Plus className=" size-2.5" />
           {t('knowledgeList.createKnowledgeBase')}
         </Button>

@@ -10,8 +10,6 @@ import homeIconActive from '@/assets/menu/house_h.png';
 import searchIcon from '@/assets/menu/search.png';
 import searchIconActive from '@/assets/menu/search_h.png';
 import { RAGFlowAvatar } from '@/components/ragflow-avatar';
-import { useTheme } from '@/components/theme-provider';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SegmentedValue } from '@/components/ui/segmented';
-import { LanguageList, LanguageMap, ThemeEnum } from '@/constants/common';
+import { LanguageList, LanguageMap } from '@/constants/common';
 import { useChangeLanguage } from '@/hooks/logic-hooks';
 import { useNavigatePage } from '@/hooks/logic-hooks/navigate-hooks';
 import { useNavigateWithFromState } from '@/hooks/route-hook';
@@ -27,8 +25,8 @@ import { useFetchUserInfo } from '@/hooks/user-setting-hooks';
 import { Routes } from '@/routes';
 import cls from 'classnames';
 import { camelCase } from 'lodash';
-import { ChevronDown, Moon, Sun } from 'lucide-react';
-import React, { useCallback, useMemo } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'umi';
 import { BellButton } from './bell-button';
@@ -40,7 +38,6 @@ export function Header() {
   const { navigateToOldProfile } = useNavigatePage();
 
   const changeLanguage = useChangeLanguage();
-  const { setTheme, theme } = useTheme();
 
   const {
     data: { language = 'English', avatar, nickname },
@@ -55,9 +52,7 @@ export function Header() {
     label: <span>{LanguageMap[x as keyof typeof LanguageMap]}</span>,
   }));
 
-  const onThemeClick = React.useCallback(() => {
-    setTheme(theme === ThemeEnum.Dark ? ThemeEnum.Light : ThemeEnum.Dark);
-  }, [setTheme, theme]);
+  // Theme toggle hidden temporarily
 
   const tagsData = useMemo(
     () => [
@@ -163,7 +158,7 @@ export function Header() {
         ))}
       </div>
       <div className="flex items-center gap-5 flex-col text-text-badge">
-        <div className="fixed top-[20px] right-[20px] bg-white">
+        <div className="fixed top-8 right-8 bg-white">
           <DropdownMenu>
             <DropdownMenuTrigger>
               <div className="flex items-center gap-1">
@@ -180,9 +175,7 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Button variant={'ghost'} onClick={onThemeClick}>
-          {theme === 'light' ? <Sun /> : <Moon />}
-        </Button>
+        {/* Theme toggle hidden */}
         <BellButton></BellButton>
         <div className="relative">
           <RAGFlowAvatar

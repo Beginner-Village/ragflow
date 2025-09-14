@@ -52,9 +52,10 @@ export default function SearchList() {
           title={t('searchApps')}
           showFilter={false}
           onSearchChange={(e) => handleSearchChange(e.target.value)}
+          className="pr-32"
         >
           <Button
-            variant={'default'}
+            className="bg-gradient-to-r from-[#42D7E7] to-[#478AF5] text-white border-0"
             onClick={() => {
               openCreateModalFun();
             }}
