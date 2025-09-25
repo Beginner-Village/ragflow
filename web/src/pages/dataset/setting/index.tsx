@@ -13,7 +13,6 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { TopTitle } from '../dataset-title';
-import { ApiKeyForm } from './api-key-form';
 import { ChunkMethodForm } from './chunk-method-form';
 import ChunkMethodLearnMore from './chunk-method-learn-more';
 import { formSchema } from './form-schema';
@@ -101,7 +100,7 @@ export default function DatasetSettings() {
               }}
               className="h-full flex flex-col"
             >
-              <TabsList className="grid bg-transparent grid-cols-3 rounded-none text-foreground">
+              <TabsList className="grid bg-transparent grid-cols-2 rounded-none text-foreground">
                 <TabsTrigger
                   value="generalForm"
                   className="group bg-transparent p-0 !border-transparent"
@@ -122,6 +121,7 @@ export default function DatasetSettings() {
                     </span>
                   </div>
                 </TabsTrigger>
+                {/* API KEY Tab temporarily hidden
                 <TabsTrigger
                   value="apiKeyForm"
                   className="group bg-transparent p-0 !border-transparent"
@@ -132,6 +132,7 @@ export default function DatasetSettings() {
                     </span>
                   </div>
                 </TabsTrigger>
+                */}
               </TabsList>
               <TabsContent value="generalForm" className="flex-1 min-h-0">
                 <GeneralForm></GeneralForm>
@@ -139,12 +140,14 @@ export default function DatasetSettings() {
               <TabsContent value="chunkMethodForm" className="flex-1 min-h-0">
                 <ChunkMethodForm></ChunkMethodForm>
               </TabsContent>
+              {/* API KEY Tab Content temporarily hidden
               <TabsContent
                 value="apiKeyForm"
                 className="flex-1 min-h-0 overflow-auto"
               >
                 <ApiKeyForm></ApiKeyForm>
               </TabsContent>
+              */}
             </Tabs>
           </form>
         </Form>
