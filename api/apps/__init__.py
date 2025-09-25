@@ -143,31 +143,75 @@ client_urls_prefix = [
 
 @login_manager.request_loader
 def load_user(web_request):
-    jwt = Serializer(secret_key=settings.SECRET_KEY)
+    # 1. 首先检查Coze的cookie认证
+    coze_session_token = web_request.cookies.get("session_key")
+    if coze_session_token:
+        try:
+            from api.utils.coze_auth import CozeAuthHelper
+
+            # 使用跨系统认证工具
+            user = CozeAuthHelper.authenticate_user(coze_session_token)
+            if user:
+                logging.info(f"✅ 跨系统认证成功: {user.email}")
+                return user
+
+            # 向后兼容：如果跨系统认证失败，尝试原有的token匹配方式
+            legacy_user = UserService.query(
+                access_token=coze_session_token, status=StatusEnum.VALID.value
+            )
+            if legacy_user and len(legacy_user) > 0:
+                logging.info(f"✅ 传统认证成功: {legacy_user[0].email}")
+                return legacy_user[0]
+
+        except Exception as e:
+            logging.warning(f"Coze认证失败: {e}")
+            import traceback
+            traceback.print_exc()
+
+    # 2. 然后检查Authorization头部认证
     authorization = web_request.headers.get("Authorization")
     if authorization:
         try:
-            access_token = str(jwt.loads(authorization))
-
-            if not access_token or not access_token.strip():
-                logging.warning("Authentication attempt with empty access token")
-                return None
-
-            # Access tokens should be UUIDs (32 hex characters)
-            if len(access_token.strip()) < 32:
-                logging.warning(f"Authentication attempt with invalid token format: {len(access_token)} chars")
-                return None
-
-            user = UserService.query(
-                access_token=access_token, status=StatusEnum.VALID.value
-            )
-            if user:
-                if not user[0].access_token or not user[0].access_token.strip():
-                    logging.warning(f"User {user[0].email} has empty access_token in database")
-                    return None
-                return user[0]
+            # 优先尝试作为coze-studio的session_key
+            if not authorization.startswith("YnetFlow-"):
+                # 这是coze的session_key，直接查询
+                user = UserService.query(
+                    access_token=authorization, status=StatusEnum.VALID.value
+                )
+                if user and len(user) > 0:
+                    return user[0]
             else:
-                return None
+                # 这是RAGFlow格式的token，尝试JWT解析（向后兼容）
+                jwt = Serializer(secret_key=settings.SECRET_KEY)
+                try:
+                    access_token = str(jwt.loads(authorization))
+
+                    if not access_token or not access_token.strip():
+                        logging.warning("Authentication attempt with empty access token")
+                        return None
+
+                    # Access tokens should be UUIDs (32 hex characters)
+                    if len(access_token.strip()) < 32:
+                        logging.warning(f"Authentication attempt with invalid token format: {len(access_token)} chars")
+                        return None
+
+                    user = UserService.query(
+                        access_token=access_token, status=StatusEnum.VALID.value
+                    )
+                    if user:
+                        if not user[0].access_token or not user[0].access_token.strip():
+                            logging.warning(f"User {user[0].email} has empty access_token in database")
+                            return None
+                        return user[0]
+                except:
+                    # JWT解析失败，作为普通token处理
+                    user = UserService.query(
+                        access_token=authorization, status=StatusEnum.VALID.value
+                    )
+                    if user and len(user) > 0:
+                        return user[0]
+
+            return None
         except Exception as e:
             logging.warning(f"load_user got exception {e}")
             return None

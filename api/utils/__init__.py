@@ -404,7 +404,40 @@ def download_img(url):
 
 
 def delta_seconds(date_string: str):
-    dt = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    try:
+        # 首先尝试原有格式
+        dt = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        try:
+            # 尝试ISO格式（支持Coze的时间格式）
+            import dateutil.parser
+            dt = dateutil.parser.parse(date_string)
+            # 转换为naive datetime用于比较
+            if dt.tzinfo:
+                dt = dt.replace(tzinfo=None)
+        except:
+            # 尝试去掉微秒部分
+            try:
+                # 移除微秒部分：2025-09-24T16:40:43.646243+08:00 -> 2025-09-24T16:40:43+08:00
+                if '.' in date_string:
+                    base_part, rest = date_string.split('.')
+                    if '+' in rest:
+                        timezone_part = '+' + rest.split('+')[1]
+                        clean_date = base_part + timezone_part
+                    elif 'Z' in rest:
+                        clean_date = base_part + 'Z'
+                    else:
+                        clean_date = base_part
+                else:
+                    clean_date = date_string
+
+                # 替换T为空格，移除时区
+                clean_date = clean_date.replace('T', ' ').split('+')[0].split('Z')[0]
+                dt = datetime.datetime.strptime(clean_date, "%Y-%m-%d %H:%M:%S")
+            except:
+                # 如果都失败了，返回当前时间（避免崩溃）
+                dt = datetime.datetime.now()
+
     return (datetime.datetime.now() - dt).total_seconds()
 
 

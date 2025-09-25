@@ -118,6 +118,24 @@ class TaskService(CommonService):
         if not docs:
             return None
 
+        # 修复配置问题：使用智能配置选择（TenantConfig优先，视图备用）
+        doc = docs[0]
+        tenant_id = doc["tenant_id"]
+        try:
+            from api.db.services.user_service import TenantService
+            tenant_configs = TenantService.get_info_by(tenant_id)
+            if tenant_configs and len(tenant_configs) > 0:
+                # 使用最新的租户配置覆盖任务配置
+                config = tenant_configs[0]
+                doc["img2txt_id"] = config.get("img2txt_id", doc["img2txt_id"])
+                doc["asr_id"] = config.get("asr_id", doc["asr_id"])
+                doc["llm_id"] = config.get("llm_id", doc["llm_id"])
+                logging.info(f"✅ 任务 {task_id} 使用最新租户配置: img2txt_id={doc['img2txt_id']}")
+            else:
+                logging.warning(f"⚠️  任务 {task_id} 未找到租户配置，使用默认配置")
+        except Exception as e:
+            logging.warning(f"⚠️  任务 {task_id} 获取租户配置失败: {e}")
+
         msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task has been received."
         prog = random.random() / 10.0
         if docs[0]["retry_count"] >= 3:

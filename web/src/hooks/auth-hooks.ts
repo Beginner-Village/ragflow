@@ -42,12 +42,32 @@ export const useOAuthCallback = () => {
   return currentQueryParameters.get('auth');
 };
 
+// Helper function to get cookie value
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
 export const useAuth = () => {
   const auth = useOAuthCallback();
   const [isLogin, setIsLogin] = useState<Nullable<boolean>>(null);
 
   useEffect(() => {
-    setIsLogin(!!authorizationUtil.getAuthorization() || !!auth);
+    // Check for Coze session cookies
+    const cozeSessionToken = getCookie('session_key');
+    const hasAuth =
+      !!authorizationUtil.getAuthorization() || !!auth || !!cozeSessionToken;
+
+    if (cozeSessionToken && !authorizationUtil.getAuthorization() && !auth) {
+      console.log('🍪 Coze session detected, user should be logged in');
+      // 如果有Coze session token，强制设置为已登录
+      setIsLogin(true);
+      return;
+    }
+
+    setIsLogin(hasAuth);
   }, [auth]);
 
   return { isLogin };

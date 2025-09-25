@@ -161,12 +161,15 @@ class KnowledgebaseService(CommonService):
             User.avatar.alias('tenant_avatar'),
             cls.model.update_time
         ]
+        # Use explicit table reference to avoid alias conflicts in JOIN
+        kb_status_field = cls.model.status
+
         if keywords:
             kbs = cls.model.select(*fields).join(User, on=(cls.model.tenant_id == User.id)).where(
                 ((cls.model.tenant_id.in_(joined_tenant_ids) & (cls.model.permission ==
                                                                 TenantPermission.TEAM.value)) | (
                     cls.model.tenant_id == user_id))
-                & (cls.model.status == StatusEnum.VALID.value),
+                & (kb_status_field == StatusEnum.VALID.value),
                 (fn.LOWER(cls.model.name).contains(keywords.lower()))
             )
         else:
@@ -174,7 +177,7 @@ class KnowledgebaseService(CommonService):
                 ((cls.model.tenant_id.in_(joined_tenant_ids) & (cls.model.permission ==
                                                                 TenantPermission.TEAM.value)) | (
                     cls.model.tenant_id == user_id))
-                & (cls.model.status == StatusEnum.VALID.value)
+                & (kb_status_field == StatusEnum.VALID.value)
             )
         if parser_id:
             kbs = kbs.where(cls.model.parser_id == parser_id)

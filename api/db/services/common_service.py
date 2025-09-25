@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from datetime import datetime
+import logging
 
 import peewee
 
@@ -188,7 +189,7 @@ class CommonService:
         """Update multiple records by their IDs.
 
         This method updates multiple records in the database, identified by their IDs.
-        It automatically updates the update_time and update_date fields for each record.
+        It uses the same view-safe logic as update_by_id for each record.
 
         Args:
             data_list (list): List of dictionaries containing record data to update.
@@ -196,9 +197,8 @@ class CommonService:
         """
         with DB.atomic():
             for data in data_list:
-                data["update_time"] = current_timestamp()
-                data["update_date"] = datetime_format(datetime.now())
-                cls.model.update(data).where(cls.model.id == data["id"]).execute()
+                record_id = data.pop("id")  # Remove ID from update data
+                cls.update_by_id(record_id, data)
 
     @classmethod
     @DB.connection_context()
@@ -209,10 +209,72 @@ class CommonService:
         #     data: Updated field values
         # Returns:
         #     Number of records updated
-        data["update_time"] = current_timestamp()
-        data["update_date"] = datetime_format(datetime.now())
-        num = cls.model.update(data).where(cls.model.id == pid).execute()
-        return num
+
+        # 检查是否是视图，如果是则预先过滤字段
+        model_name = cls.model.__name__ if hasattr(cls.model, '__name__') else str(cls.model)
+        table_name = getattr(cls.model._meta, 'table_name', '')
+
+        # 判断是否为视图（特定的视图表名）
+        # 注意：现在只有ragflow_tenant视图需要特殊处理，其他都有对应的真实表
+        view_tables = {'ragflow_tenant', 'ragflow_user_tenant', 'ragflow_dialog', 'ragflow_task'}
+        is_view = table_name in view_tables
+
+        if is_view:
+            # 为视图使用白名单策略，提前过滤字段
+            logging.info(f"检测到视图表 {table_name}，使用白名单更新策略")
+
+            # 定义可更新字段白名单
+            updatable_fields = set()
+
+            if 'Tenant' in model_name or 'ragflow_tenant' in table_name:
+                # ragflow_tenant视图可更新字段
+                updatable_fields = {'name', 'public_key', 'create_time', 'update_time'}
+            elif 'User' in model_name or 'ragflow_user' in table_name:
+                # ragflow_user视图可更新字段
+                updatable_fields = {
+                    'access_token', 'nickname', 'password', 'email', 'avatar',
+                    'create_time', 'update_time'
+                }
+            else:
+                # 其他视图的可更新字段
+                updatable_fields = {'name', 'description', 'create_time', 'update_time'}
+
+            # 只保留白名单中的字段，并添加update_time
+            safe_data = {k: v for k, v in data.items() if k in updatable_fields}
+            if 'update_time' in updatable_fields:
+                safe_data["update_time"] = current_timestamp()
+
+            if safe_data:
+                logging.info(f"视图更新字段: {list(safe_data.keys())}")
+                logging.info(f"safe_data内容: {safe_data}")
+
+                # 额外检查：确保 update_date 不在 safe_data 中
+                if 'update_date' in safe_data:
+                    logging.error("ERROR: update_date 在 safe_data 中！这不应该发生")
+                    safe_data.pop('update_date', None)
+
+                try:
+                    result = cls.model.update(safe_data).where(cls.model.id == pid).execute()
+                    logging.info(f"视图更新成功，影响行数: {result}")
+                    return result
+                except Exception as update_error:
+                    logging.error(f"视图更新失败: {update_error}")
+                    logging.error(f"尝试更新的数据: {safe_data}")
+                    raise update_error
+            else:
+                logging.info(f"没有可更新的字段，跳过更新。原始字段: {list(data.keys())}")
+                return 0
+        else:
+            # 非视图表，使用原来的逻辑
+            try:
+                data["update_time"] = current_timestamp()
+                data["update_date"] = datetime_format(datetime.now())
+                num = cls.model.update(data).where(cls.model.id == pid).execute()
+                return num
+            except Exception as e:
+                # 如果仍然遇到更新错误，记录并重新抛出
+                logging.error(f"非视图表更新失败: {e}")
+                raise e
 
     @classmethod
     @DB.connection_context()

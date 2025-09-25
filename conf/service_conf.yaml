@@ -4,11 +4,11 @@ ragflow:
   secret_key: 'ynetflow-stable-secret-key-12345678901234567890123456789012'
   document_base_url: 'https://ynetflow-agent.finmall.com'
 mysql:
-  name: 'rag_flow'
-  user: 'root'
-  password: 'infini_rag_flow'
-  host: '10.10.10.223'
-  port: 5455
+  name: 'opencoze'  # 使用coze-studio的数据库
+  user: 'coze'
+  password: 'coze123'
+  host: '10.10.10.220'  # coze-studio的MySQL服务器
+  port: 3306
   max_connections: 900
   stale_timeout: 300
   max_allowed_packet: 1073741824

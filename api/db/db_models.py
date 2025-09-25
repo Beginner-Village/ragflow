@@ -231,8 +231,19 @@ class BaseModel(Model):
 
         normalized[cls._meta.combined["update_time"]] = utils.current_timestamp()
 
+        # 检查是否为视图表（视图表的_date字段通常不可更新）
+        table_name = getattr(cls._meta, 'table_name', '')
+        # 只有特定的视图需要跳过_date字段设置
+        view_tables = {'ragflow_tenant', 'ragflow_user', 'ragflow_user_tenant', 'ragflow_knowledgebase', 'ragflow_dialog', 'ragflow_task'}
+        is_view = table_name in view_tables
+
         for f_n in AUTO_DATE_TIMESTAMP_FIELD_PREFIX:
             if {f"{f_n}_time", f"{f_n}_date"}.issubset(cls._meta.combined.keys()) and cls._meta.combined[f"{f_n}_time"] in normalized and normalized[cls._meta.combined[f"{f_n}_time"]] is not None:
+                # 对于视图表，跳过_date字段的自动设置
+                if is_view and f_n in ['update', 'create']:
+                    import logging
+                    logging.debug(f"跳过视图表 {table_name} 的 {f_n}_date 自动设置")
+                    continue
                 normalized[cls._meta.combined[f"{f_n}_date"]] = utils.timestamp_to_date(normalized[cls._meta.combined[f"{f_n}_time"]])
 
         return normalized
@@ -466,9 +477,17 @@ def init_database_tables(alter_fields=[]):
     members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
     table_objs = []
     create_failed_list = []
+    # 使用Coze视图时跳过的表（这些是视图，不能创建）
+    skip_tables_for_coze = ['User', 'Tenant', 'UserTenant', 'Knowledgebase', 'APIToken']
+
     for name, obj in members:
         if obj != DataBaseModel and issubclass(obj, DataBaseModel):
             table_objs.append(obj)
+
+            # 如果使用的是Coze数据库，跳过视图相关的表
+            if DB.database == 'opencoze' and obj.__name__ in skip_tables_for_coze:
+                logging.info(f"Skip creating view {obj.__name__} in Coze database")
+                continue
 
             if not obj.table_exists():
                 logging.debug(f"start create table {obj.__name__}")
@@ -517,11 +536,33 @@ class User(DataBaseModel, UserMixin):
         return self.email
 
     def get_id(self):
-        jwt = Serializer(secret_key=settings.SECRET_KEY)
-        return jwt.dumps(str(self.access_token))
+        # 直接返回access_token (session_key)，不再JWT封装
+        # 这样可以直接使用coze-studio的session验证
+        return str(self.access_token) if self.access_token else None
 
     class Meta:
-        db_table = "user"
+        db_table = "ragflow_user"  # 使用coze-studio的视图
+
+
+class CozeUser(BaseModel):
+    """直接映射Coze数据库中的user表"""
+    id = BigIntegerField(primary_key=True)
+    name = CharField(max_length=128, null=True)
+    unique_name = CharField(max_length=128, null=True)
+    email = CharField(max_length=128, null=True)
+    password = CharField(max_length=128, null=True)
+    description = CharField(max_length=512, null=True)
+    icon_uri = CharField(max_length=512, null=True)
+    user_verified = BooleanField(default=False)
+    locale = CharField(max_length=128, null=True)
+    session_key = CharField(max_length=256, null=True)
+    created_at = BigIntegerField(null=True)
+    updated_at = BigIntegerField(null=True)
+    deleted_at = BigIntegerField(null=True)
+
+    class Meta:
+        database = DB  # 明确指定数据库连接
+        db_table = "user"  # 直接使用Coze的user表
 
 
 class Tenant(DataBaseModel):
@@ -539,7 +580,7 @@ class Tenant(DataBaseModel):
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
     class Meta:
-        db_table = "tenant"
+        db_table = "ragflow_tenant"  # 使用coze-studio的视图
 
 
 class UserTenant(DataBaseModel):
@@ -551,7 +592,20 @@ class UserTenant(DataBaseModel):
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
     class Meta:
-        db_table = "user_tenant"
+        db_table = "ragflow_user_tenant"  # 使用coze-studio的视图
+
+
+class UserTenantReal(DataBaseModel):
+    """ragflow_user_tenant视图的对应真实表，用于可更新操作"""
+    id = CharField(max_length=32, primary_key=True)
+    user_id = CharField(max_length=32, null=False, index=True)
+    tenant_id = CharField(max_length=32, null=False, index=True)
+    role = CharField(max_length=16, null=False, help_text="UserTenantRole", index=True)
+    invited_by = CharField(max_length=32, null=True, index=True)
+    status = CharField(max_length=1, null=False, help_text="1: active, 0: deleted", default="1", index=True)
+
+    class Meta:
+        db_table = "ragflow_user_tenant_real"  # 对应的真实表
 
 
 class InvitationCode(DataBaseModel):
@@ -563,7 +617,7 @@ class InvitationCode(DataBaseModel):
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
     class Meta:
-        db_table = "invitation_code"
+        db_table = "ragflow_invitation_code"
 
 
 class LLMFactories(DataBaseModel):
@@ -576,7 +630,7 @@ class LLMFactories(DataBaseModel):
         return self.name
 
     class Meta:
-        db_table = "llm_factories"
+        db_table = "ragflow_llm_factories"
 
 
 class LLM(DataBaseModel):
@@ -595,7 +649,7 @@ class LLM(DataBaseModel):
 
     class Meta:
         primary_key = CompositeKey("fid", "llm_name")
-        db_table = "llm"
+        db_table = "ragflow_llm"
 
 
 class TenantLLM(DataBaseModel):
@@ -612,7 +666,7 @@ class TenantLLM(DataBaseModel):
         return self.llm_name
 
     class Meta:
-        db_table = "tenant_llm"
+        db_table = "ragflow_tenant_llm"
         primary_key = CompositeKey("tenant_id", "llm_factory", "llm_name")
 
 
@@ -626,7 +680,30 @@ class TenantLangfuse(DataBaseModel):
         return "Langfuse host" + self.host
 
     class Meta:
-        db_table = "tenant_langfuse"
+        db_table = "ragflow_tenant_langfuse"
+
+
+class TenantConfig(DataBaseModel):
+    """租户配置表 - 存储可更新的租户配置信息"""
+
+    tenant_id = CharField(max_length=32, primary_key=True, help_text="租户ID，对应user表的MD5(id)")
+    name = CharField(max_length=100, null=True, help_text="租户名称", index=True)
+
+    # AI模型配置
+    llm_id = CharField(max_length=128, null=True, help_text="默认LLM模型ID", index=True)
+    embd_id = CharField(max_length=128, null=True, help_text="默认嵌入模型ID", index=True)
+    asr_id = CharField(max_length=128, null=True, help_text="默认ASR模型ID", index=True)
+    img2txt_id = CharField(max_length=128, null=True, help_text="默认图像识别模型ID", index=True)
+    rerank_id = CharField(max_length=128, null=True, help_text="默认重排序模型ID", index=True)
+    tts_id = CharField(max_length=256, null=True, help_text="默认TTS模型ID", index=True)
+    parser_ids = CharField(max_length=256, null=True, help_text="文档处理器", index=True)
+
+    # 扩展字段
+    description = TextField(null=True, help_text="租户描述")
+    settings = TextField(null=True, help_text="其他配置信息(JSON格式)")
+
+    class Meta:
+        db_table = "ragflow_tenant_config"
 
 
 class Knowledgebase(DataBaseModel):
@@ -654,7 +731,7 @@ class Knowledgebase(DataBaseModel):
         return self.name
 
     class Meta:
-        db_table = "knowledgebase"
+        db_table = "ragflow_knowledgebase"
 
 
 class Document(DataBaseModel):
@@ -682,7 +759,7 @@ class Document(DataBaseModel):
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
     class Meta:
-        db_table = "document"
+        db_table = "ragflow_document"
 
 
 class File(DataBaseModel):
@@ -697,7 +774,7 @@ class File(DataBaseModel):
     source_type = CharField(max_length=128, null=False, default="", help_text="where dose this document come from", index=True)
 
     class Meta:
-        db_table = "file"
+        db_table = "ragflow_file"
 
 
 class File2Document(DataBaseModel):
@@ -706,7 +783,7 @@ class File2Document(DataBaseModel):
     document_id = CharField(max_length=32, null=True, help_text="document id", index=True)
 
     class Meta:
-        db_table = "file2document"
+        db_table = "ragflow_file2document"
 
 
 class Task(DataBaseModel):
@@ -726,6 +803,9 @@ class Task(DataBaseModel):
     digest = TextField(null=True, help_text="task digest", default="")
     chunk_ids = LongTextField(null=True, help_text="chunk ids", default="")
 
+
+    class Meta:
+        db_table = "ragflow_task"
 
 class Dialog(DataBaseModel):
     id = CharField(max_length=32, primary_key=True)
@@ -759,7 +839,7 @@ class Dialog(DataBaseModel):
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
     class Meta:
-        db_table = "dialog"
+        db_table = "ragflow_dialog"
 
 
 class Conversation(DataBaseModel):
@@ -771,7 +851,7 @@ class Conversation(DataBaseModel):
     user_id = CharField(max_length=255, null=True, help_text="user_id", index=True)
 
     class Meta:
-        db_table = "conversation"
+        db_table = "ragflow_conversation"
 
 
 class APIToken(DataBaseModel):
@@ -782,7 +862,7 @@ class APIToken(DataBaseModel):
     beta = CharField(max_length=255, null=True, index=True)
 
     class Meta:
-        db_table = "api_token"
+        db_table = "api_token"  # 直接使用Coze原始的api_token表
         primary_key = CompositeKey("tenant_id", "token")
 
 
@@ -801,7 +881,7 @@ class API4Conversation(DataBaseModel):
     errors = TextField(null=True, help_text="errors")
 
     class Meta:
-        db_table = "api_4_conversation"
+        db_table = "ragflow_api_4_conversation"
 
 
 class UserCanvas(DataBaseModel):
@@ -817,7 +897,7 @@ class UserCanvas(DataBaseModel):
     dsl = JSONField(null=True, default={})
 
     class Meta:
-        db_table = "user_canvas"
+        db_table = "ragflow_user_canvas"
 
 
 class CanvasTemplate(DataBaseModel):
@@ -830,7 +910,7 @@ class CanvasTemplate(DataBaseModel):
     dsl = JSONField(null=True, default={})
 
     class Meta:
-        db_table = "canvas_template"
+        db_table = "ragflow_canvas_template"
 
 
 class UserCanvasVersion(DataBaseModel):
@@ -842,7 +922,7 @@ class UserCanvasVersion(DataBaseModel):
     dsl = JSONField(null=True, default={})
 
     class Meta:
-        db_table = "user_canvas_version"
+        db_table = "ragflow_user_canvas_version"
 
 
 class MCPServer(DataBaseModel):
@@ -856,7 +936,7 @@ class MCPServer(DataBaseModel):
     headers = JSONField(null=True, default=dict, help_text="MCP Server additional request headers")
 
     class Meta:
-        db_table = "mcp_server"
+        db_table = "ragflow_mcp_server"
 
 
 class Search(DataBaseModel):
@@ -901,7 +981,7 @@ class Search(DataBaseModel):
         return self.name
 
     class Meta:
-        db_table = "search"
+        db_table = "ragflow_search"
 
 
 def migrate_db():

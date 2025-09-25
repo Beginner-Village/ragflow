@@ -1,7 +1,6 @@
 import path from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 import { defineConfig } from 'umi';
-import { appName } from './src/conf.json';
 import routes from './src/routes';
 const ESLintPlugin = require('eslint-webpack-plugin');
 
@@ -40,7 +39,7 @@ export default defineConfig({
   proxy: [
     {
       context: ['/api', '/v1'],
-      target: 'https://ynetflow-agent.finmall.com',
+      target: 'http://127.0.0.1:9380', // 指向本地后端服务
       changeOrigin: true,
       ws: true,
       logger: console,

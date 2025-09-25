@@ -46,13 +46,31 @@ const storage = {
   },
 };
 
+// Helper function to get cookie value
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
 export const getAuthorization = () => {
   const auth = getSearchValue('auth');
-  const authorization = auth
-    ? 'Bearer ' + auth
-    : storage.getAuthorization() || '';
 
-  return authorization;
+  // First, check if we have URL auth parameter
+  if (auth) {
+    return 'Bearer ' + auth;
+  }
+
+  // Then, check for Coze session cookie
+  const cozeSessionToken = getCookie('session_key');
+  if (cozeSessionToken) {
+    console.log('🍪 Using Coze session token for authentication');
+    return cozeSessionToken;
+  }
+
+  // Finally, fall back to localStorage
+  return storage.getAuthorization() || '';
 };
 
 export default storage;

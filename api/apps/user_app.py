@@ -92,19 +92,34 @@ def login():
         )
 
     password = request.json.get("password")
-    try:
-        password = decrypt(password)
-    except BaseException:
-        return get_json_result(data=False, code=settings.RetCode.SERVER_ERROR, message="Fail to crypt password")
+
+    # For Coze integration, try to decrypt first, if it fails, use plain text
+    from api.db.db_models import DB
+    if DB.database == 'opencoze':
+        # For Coze database, allow plain text passwords
+        decrypted_password = password
+    else:
+        # For RAGFlow's own database, decrypt the password
+        try:
+            decrypted_password = decrypt(password)
+        except BaseException:
+            return get_json_result(data=False, code=settings.RetCode.SERVER_ERROR, message="Fail to crypt password")
+
+    password = decrypted_password
 
     user = UserService.query_user(email, password)
     if user:
         response_data = user.to_json()
         user.access_token = get_uuid()
         login_user(user)
-        user.update_time = (current_timestamp(),)
-        user.update_date = (datetime_format(datetime.now()),)
-        user.save()
+
+        # Skip updating views in Coze database
+        from api.db.db_models import DB
+        if DB.database != 'opencoze':
+            user.update_time = (current_timestamp(),)
+            user.update_date = (datetime_format(datetime.now()),)
+            user.save()
+
         msg = "Welcome back!"
         return construct_response(data=response_data, auth=user.get_id(), message=msg)
     else:

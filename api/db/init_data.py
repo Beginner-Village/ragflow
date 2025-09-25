@@ -93,6 +93,12 @@ def init_superuser():
 
 
 def init_llm_factory():
+    from api.db.db_models import DB
+    # 如果使用Coze数据库，跳过更新（视图不可更新）
+    if DB.database == 'opencoze':
+        logging.info("Skip init_llm_factory for Coze database (views are not updatable)")
+        return
+
     try:
         LLMService.filter_delete([(LLM.fid == "MiniMax" or LLM.fid == "Minimax")])
         LLMService.filter_delete([(LLM.fid == "cohere")])
