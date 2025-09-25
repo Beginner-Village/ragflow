@@ -233,6 +233,7 @@ class CommonService:
                 # ragflow_user视图可更新字段
                 updatable_fields = {
                     'access_token', 'nickname', 'password', 'email', 'avatar',
+                    'language', 'color_schema', 'timezone',  # 添加用户偏好设置字段
                     'create_time', 'update_time'
                 }
             else:
