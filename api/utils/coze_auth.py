@@ -151,6 +151,7 @@ class CozeAuthHelper:
                     'id': hashlib.md5(str(coze_user.id).encode()).hexdigest(),  # 使用MD5映射ID
                     'email': coze_user.email,
                     'nickname': coze_user.name or coze_user.email.split('@')[0],
+                    'access_token': session_key,  # 重要：设置access_token为session_key
                     'status': StatusEnum.VALID.value,
                     'is_authenticated': '1',
                     'is_active': '1',
@@ -290,6 +291,7 @@ class CozeAuthHelper:
                     'id': hashlib.md5(str(coze_user_id).encode()).hexdigest(),  # 使用MD5映射ID
                     'email': email,
                     'nickname': name or email.split('@')[0],
+                    'access_token': session_key,  # 重要：设置access_token为session_key
                     'status': StatusEnum.VALID.value,
                     'is_authenticated': '1',
                     'is_active': '1',

@@ -55,31 +55,39 @@ const getCookie = (name: string): string | null => {
 };
 
 export const getAuthorization = () => {
-  const auth = getSearchValue('auth');
-  const urlSessionKey = getSearchValue('session_key');
+  // 1. First check localStorage (most reliable after initial setup)
+  const storedAuth = storage.getAuthorization();
+  if (storedAuth) {
+    console.log('📦 Using stored authorization');
+    return storedAuth;
+  }
 
-  // First, check for Coze session cookie (优先检查cookie，因为可能是重定向后的页面)
+  // 2. Check for Coze session cookie
   const cozeSessionToken = getCookie('session_key');
   if (cozeSessionToken) {
-    console.log('🍪 Using Coze session token for authentication');
+    console.log('🍪 Using Coze session token from cookie');
+    // Also save to localStorage for persistence
+    storage.setAuthorization(cozeSessionToken);
     return cozeSessionToken;
   }
 
-  // Then, check if we have session_key in URL parameters (for SSO initial request)
+  // 3. Check URL parameters (for initial SSO)
+  const urlSessionKey = getSearchValue('session_key');
   if (urlSessionKey) {
-    console.log('🔑 Detected session_key in URL, will be handled by backend');
-    // The backend will handle setting the cookie and redirecting
-    // Return the session key for the initial request
+    console.log('🔑 Using session_key from URL');
+    // Save to localStorage immediately
+    storage.setAuthorization(urlSessionKey);
     return urlSessionKey;
   }
 
-  // Then, check if we have URL auth parameter
+  // 4. Check for auth parameter (legacy support)
+  const auth = getSearchValue('auth');
   if (auth) {
     return 'Bearer ' + auth;
   }
 
-  // Finally, fall back to localStorage
-  return storage.getAuthorization() || '';
+  // No authentication found
+  return '';
 };
 
 export default storage;
