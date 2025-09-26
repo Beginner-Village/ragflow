@@ -1,3 +1,4 @@
+import useSessionKeyAuth from '@/hooks/use-session-key-auth';
 import { Divider, Layout, theme } from 'antd';
 import React from 'react';
 import { Outlet } from 'umi';
@@ -12,6 +13,9 @@ const App: React.FC = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  // Handle session_key authentication from URL
+  useSessionKeyAuth();
 
   return (
     <Layout className={styles.layout}>
