@@ -56,8 +56,18 @@ const getCookie = (name: string): string | null => {
 
 export const getAuthorization = () => {
   const auth = getSearchValue('auth');
+  const urlSessionKey = getSearchValue('session_key');
 
-  // First, check if we have URL auth parameter
+  // First, check if we have session_key in URL parameters (for SSO)
+  if (urlSessionKey) {
+    console.log('🔑 Detected session_key in URL, will be handled by backend');
+    // The backend will handle setting the cookie and redirecting
+    // We don't need to do anything here, but we could optionally
+    // trigger a page reload after a short delay to ensure cookie is set
+    return urlSessionKey;
+  }
+
+  // Then, check if we have URL auth parameter
   if (auth) {
     return 'Bearer ' + auth;
   }

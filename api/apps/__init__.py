@@ -219,6 +219,73 @@ def load_user(web_request):
         return None
 
 
+@app.before_request
+def handle_session_key_from_url():
+    """
+    全局中间件：处理URL参数中的session_key，实现免密登录
+    如果URL中包含session_key参数，自动将其设置为cookie并使用该token登录
+    """
+    from flask import request, make_response, redirect
+
+    # 获取URL中的session_key参数
+    session_key = request.args.get('session_key')
+
+    if session_key:
+        try:
+            logging.info(f"检测到URL中的session_key参数: {session_key[:10]}...")
+
+            # 验证session_key是否有效
+            from api.utils.coze_auth import CozeAuthHelper
+            user = CozeAuthHelper.authenticate_user(session_key)
+
+            if not user:
+                # 尝试使用传统方式验证
+                users = UserService.query(
+                    access_token=session_key,
+                    status=StatusEnum.VALID.value
+                )
+                if users and len(users) > 0:
+                    user = users[0]
+
+            if user:
+                logging.info(f"✅ session_key验证成功，用户: {user.email}")
+
+                # 构建没有session_key参数的URL
+                args = request.args.copy()
+                args.pop('session_key', None)
+
+                # 重构URL
+                if args:
+                    from urllib.parse import urlencode
+                    new_url = f"{request.path}?{urlencode(args)}"
+                else:
+                    new_url = request.path
+
+                # 创建响应并设置cookie
+                response = make_response(redirect(new_url, code=302))
+                response.set_cookie(
+                    'session_key',
+                    session_key,
+                    max_age=30*24*60*60,  # 30天有效期
+                    httponly=True,
+                    secure=request.is_secure,  # 如果是HTTPS则设置secure标志
+                    samesite='Lax'  # 防止CSRF攻击
+                )
+
+                logging.info(f"已设置session_key cookie并重定向到: {new_url}")
+                return response
+            else:
+                logging.warning(f"⚠️ 无效的session_key: {session_key[:10]}...")
+
+        except Exception as e:
+            logging.error(f"处理session_key时出错: {e}")
+            import traceback
+            traceback.print_exc()
+
+    # 如果没有session_key参数或处理失败，继续正常流程
+    return None
+
+
 @app.teardown_request
 def _db_close(exc):
     close_connection()
